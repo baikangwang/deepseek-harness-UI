@@ -27,11 +27,26 @@
 
 **现状**：`dsh-client-ui-layout` 的 `AppFrame` 是三栏 flex（`sidebar | conversation | details`），`conversation` 是会话主体。动态插件无法插入新列。
 
-**改法**：
-- 在 `AppFrame` 的 `sidebar` 与 `conversation` 之间增加一个 `editor` 列（可折叠、可拖宽，复用现有 drag/concession 机制）。
-- 在 `SlotMap` 声明 `editor`（`single`/`session-maybe`），由布局 owner 传入几何（`open/width`）与 `ctx.layout.openEditor/closeEditor/toggleEditor`。
-- DSH Code 的「文件查看」「源码管理 diff」渲染到 `editor` 槽；会话保持在中右。
-- 打开文件 / 点 diff 时调用 `ctx.layout.openEditor()`，关闭时回收。
+**改法（✅ 已在 `D:\working\projects\deepseek-harness` 克隆中实现）**：
+
+- `packages/client/ui-layout/src/client/columns.ts`
+  - `Columns` 增加 `editor`；新增 `EDITOR_MIN=320 / EDITOR_MAX=800 / EDITOR_DEFAULT=480`。
+  - `computeColumns(viewport, sidebar, editor, details)` 扩为四栏让步链：
+    center ≥ CENTER_MIN 优先，依次让步 details（收缩→自动关闭）→ editor（收缩→自动关闭）→ center 兜底；侧栏永不退让。
+- `packages/client/ui-layout/src/client/stores.ts`
+  - `LayoutState` 增加 `editor`（px，0=关闭）；动作 `setEditor / openEditor / closeEditor / toggleEditor`。
+- `packages/client/ui-layout/src/client/service.ts`
+  - `ILayout` + `LayoutController` 增加 `openEditor / closeEditor / toggleEditor`。
+- `packages/client/ui-layout/src/client/index.ts`
+  - `SlotMap` 声明 `'editor': { kind:'single'; scope:'session-maybe'; owner:EditorOwnerProps }`（随会话保持身份，文档跨会话驻留）；root 注册 children 增加 editor。
+- `packages/client/ui-layout/src/client/AppFrame.tsx` + `AppFrame.module.css`
+  - 网格改为 `sidebar | editor | center | details` 四轨；渲染 `renderSlot('editor', {})`；增加 editor 拖拽手柄（右侧边界，`setEditor(base+dx)`）与 `data-editor-collapsed` 折叠态（去边框 + 隐藏手柄）。
+- 同步更新 `tests/columns|layout-store|service|apply|app-frame` 五个 spec，以及
+  `scripts/gen-cordis-inspect-catalog.ts`、`packages/extensions/cordis-client-runner/src/client/{api-catalog,slot-catalog}.ts` 三个 catalog。
+
+**接入方式（DSH Code 后续迁移）**：把动态插件里的「编辑器」从 `conversation.view` 一级标签迁到 `editor` 槽，打开文件/diff 时调用 `ctx.layout.openEditor()`，关闭时 `closeEditor()` —— 文件编辑器成为独立中栏，与对话并列显示。
+
+> 注：本项修改在源码层，需重建/重装 `dsh-client-ui-layout` 后生效；克隆当前未装依赖，无法本地跑类型检查/测试，改动已逐文件复核。
 
 ## #7（✅ 已实现）conversation 服务暴露 setView —— 编辑器一级标签页自动切换
 
