@@ -43,15 +43,21 @@ baked 动作 `actions.setView(view)` 只在 `conversation.session` 子树内可�
 **改法（已在 `D:\working\projects\deepseek-harness` 克隆中落地）**，文件 `packages/client/ui-conversation/src/client/`：
 
 - `service.ts`
-  - `IConversation` 增加 `setView(view: string): void`（注释注明未知 id 回退 Chat）。
+  - `IConversation` 增加 `setView(view: string, sessionId?: SessionId): void`（注释注明未知 id 回退 Chat；
+    显式 sessionId 供根上下文调用者使用，省略时按调用方 scope 寻址）。
   - 新增 `ConversationControllerConfig { input; blocks; setView: (sessionId: SessionId, view: string) => void }`；
     `ConversationController` 构造函数改收该 config，字段 `private readonly setViewStore` 保存回调。
-  - 增加实例方法：`setView(view: string): void { this.setViewStore(this.scopeId('setView'), view) }`
-    —— 复用 scope 寻址（`sessions.scopeOf(this.ctx)`），根上下文调用抛错，与其余方法一致。
+  - 增加实例方法：`setView(view: string, sessionId?: SessionId): void { this.setViewStore(sessionId ?? this.scopeId('setView'), view) }`
+    —— 显式 id 优先，否则复用 scope 寻址（`sessions.scopeOf(this.ctx)`）。
 - `apply.ts`
   - 装配处由 `ctx.plugin(ConversationController, { input: inputHub, blocks: composerBlocks })`
     改为传入 `setView: (sessionId, view) => { chatStore.create(sessionId).actions.setView(view) }`
     （`chatStore` 同一实例，`create` 按 (handle, scopeKey) 缓存，与槽系统注入的实例一致）。
+
+> 设计注记：初版只有 `setView(view)`（scope 寻址），但动态 Cordis 插件的运行时护栏
+> 拒绝 `sessions.scope(id)` 返回的 cordis Context（"service 'sessions' returned a cordis Context"），
+> 侧栏无法借 Context 进入会话作用域。因此改为「显式 sessionId」形态：侧栏已知当前会话 id
+> （sessions store 的 `current`），直接 `conv.setView('editor', current)`，不产生 Context。
 
 **立即生效**：已同步热补丁运行中编译包
 `C:\Users\wangbaikang\.dsh\profiles\node_modules\@deepseek-ai\dsh-client-ui-conversation\lib\client.js`

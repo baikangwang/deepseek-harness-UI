@@ -60,16 +60,15 @@ export default {
       close: function (key) { const i = this.tabs.findIndex(function (t) { return t.key === key }); if (i < 0) return; this.tabs.splice(i, 1); if (this.activeId === key) { const next = this.tabs[i] || this.tabs[i - 1]; this.activeId = next ? next.key : null } this.emit() },
       setActive: function (key) { if (this.activeId !== key) { this.activeId = key; this.emit() } },
     }
-    // 自动切换到「编辑器」一级标签：通过当前会话作用域访问 conversation 服务，
-    // 探测 setView（需要 ui-conversation 补丁）后调用；失败回退内联预览。
+    // 自动切换到「编辑器」一级标签：以显式会话 id 直接调用 conversation 服务的
+    // setView(view, sessionId)（根上下文可调用，无需 cordis Context；动态插件
+    // 护栏不允许 sessions.scope(id) 返回的 Context）。失败回退内联预览。
     function trySwitchEditor(current) {
       try {
-        const sessions = ctx.get('sessions')
-        if (!sessions || typeof sessions.scope !== 'function' || !current) return false
-        const scoped = sessions.scope(current)
-        const conv = scoped && scoped.conversation
+        if (!current) return false
+        const conv = ctx.get('conversation')
         if (!conv || typeof conv.setView !== 'function') return false
-        conv.setView('editor')
+        conv.setView('editor', current)
         return true
       } catch (e) { return false }
     }
