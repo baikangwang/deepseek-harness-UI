@@ -1,25 +1,87 @@
 {
   "name": "@deepseek-ai/dsh-ide",
+  "description": "deepseek-harness-UI: VSCode-style Explorer / Search / Source Control / Sessions sidebar and editor column for the DeepSeek Harness Web UI.",
   "version": "0.1.0",
-  "private": true,
-  "description": "VSCode-style unified sidebar for the DeepSeek Harness Web UI: Explorer, Search, Source Control, Sessions.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baikangwang/deepseek-harness-UI.git",
+    "directory": "packages/ide"
+  },
   "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
   "exports": {
-    "./host": "./host.js",
-    "./client": "./client.js"
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
   },
   "dsh": {
-    "host": {
-      "inject": ["fs", "subprocess", "workspaceRegistry", "sandboxPolicy"]
-    },
     "client": {
-      "inject": ["slots"],
-      "platform": "web"
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
     }
   },
-  "peerDependencies": {
-    "react": "^18.2.0",
-    "@deepseek-ai/cordis": "^4.0.1"
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
   },
-  "license": "MIT"
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:^",
+    "@deepseek-ai/dsh-api-gateway": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:^",
+    "@deepseek-ai/dsh-api-gateway": "workspace:^",
+    "@deepseek-ai/dsh-api-remotes": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@deepseek-ai/dsh-fs": "workspace:^",
+    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
+    "@deepseek-ai/dsh-subprocess": "workspace:^",
+    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
+    "@deepseek-ai/dsh-workspace": "workspace:^",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0"
+  }
 }
