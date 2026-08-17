@@ -43,6 +43,8 @@
 | `ide.mkdir` | `{ path }` | `{ ok, stderr }` | PowerShell `New-Item -ItemType Directory` |
 | `ide.delete` | `{ path }` | `{ ok, stderr }` | PowerShell `Remove-Item -Recurse -Force` |
 | `ide.rename` | `{ from, to }` | `{ ok, stderr }` | PowerShell `Move-Item` |
+| `ide.explore` | `{ path, select? }` | `{ ok, path }` | `explorer.exe /select,<path>` 在资源管理器中显示/打开 |
+| `ide.paste` | `{ dest }` | `{ ok, files[], stderr }` | 读剪贴板 FileDropList 复制文件到 dest |
 | `ide.git.stage` | `{ cwd, paths[] }` | `{ ok, stderr }` | `git add -- <paths>` |
 | `ide.git.unstage` | `{ cwd, paths[] }` | `{ ok, stderr }` | `git reset -q -- <paths>` |
 | `ide.git.stageAll` | `{ cwd }` | `{ ok, stderr }` | `git add -A` |

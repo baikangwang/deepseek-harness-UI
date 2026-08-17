@@ -132,6 +132,21 @@ export default {
       return { ok: d.ok, stderr: d.stderr, from, to }
     })
 
+    harness.handle('ide.explore', async (args) => {
+      const path = str(args && args.path)
+      const select = !!(args && args.select)
+      const argv = select ? ['/select,' + path] : [path]
+      const d = await run('explorer.exe', root(), argv)
+      return { ok: !d.spawnFailed, path }
+    })
+
+    harness.handle('ide.paste', async (args) => {
+      const dest = str(args && args.dest)
+      const script = '$files=@(Get-Clipboard -Format FileDropList);$out=@();foreach($f in $files){Copy-Item -LiteralPath $f -Destination $args[0] -Recurse -Force;$out+=(Split-Path $f -Leaf)};$out -join [char]10'
+      const d = await pwsh(script, [dest])
+      return { ok: d.ok, files: d.stdout.split('\n').filter(Boolean), stderr: d.stderr }
+    })
+
     harness.handle('ide.git.status', async (args) => {
       const cwd = str(args && args.cwd)
       if (cwd === '') return { branch: '', changes: [], notRepo: true, error: 'no workspace directory' }
