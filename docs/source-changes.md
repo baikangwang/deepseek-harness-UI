@@ -1,4 +1,4 @@
-# 源码级改造规格（#1 / #3 / #6）
+# 源码级改造规格（#1 / #3 / #6 / #7）
 
 这三项无法在「动态 Cordis 插件」层完成，根源是槽位系统的硬约束：
 
@@ -33,8 +33,40 @@
 - DSH Code 的「文件查看」「源码管理 diff」渲染到 `editor` 槽；会话保持在中右。
 - 打开文件 / 点 diff 时调用 `ctx.layout.openEditor()`，关闭时回收。
 
+## #7（✅ 已实现）conversation 服务暴露 setView —— 编辑器一级标签页自动切换
+
+**背景**：会话「对话/轨迹」一级标签页的切换状态存在每会话的 chat store（`ChatStoreState.view`，persist `dsh.conversation.chat`），
+baked 动作 `actions.setView(view)` 只在 `conversation.session` 子树内可达；`ctx.conversation`（`IConversation`）此前没有对外
+切换接口，侧栏（DSH Code）无法把「打开文件」路由到「编辑器」标签。动态插件层无法补上：client 侧没有 setView 事件，且
+`conversation.session` 的 `store: chatStore` 注入只在会话子树内。
+
+**改法（已在 `D:\working\projects\deepseek-harness` 克隆中落地）**，文件 `packages/client/ui-conversation/src/client/`：
+
+- `service.ts`
+  - `IConversation` 增加 `setView(view: string): void`（注释注明未知 id 回退 Chat）。
+  - 新增 `ConversationControllerConfig { input; blocks; setView: (sessionId: SessionId, view: string) => void }`；
+    `ConversationController` 构造函数改收该 config，字段 `private readonly setViewStore` 保存回调。
+  - 增加实例方法：`setView(view: string): void { this.setViewStore(this.scopeId('setView'), view) }`
+    —— 复用 scope 寻址（`sessions.scopeOf(this.ctx)`），根上下文调用抛错，与其余方法一致。
+- `apply.ts`
+  - 装配处由 `ctx.plugin(ConversationController, { input: inputHub, blocks: composerBlocks })`
+    改为传入 `setView: (sessionId, view) => { chatStore.create(sessionId).actions.setView(view) }`
+    （`chatStore` 同一实例，`create` 按 (handle, scopeKey) 缓存，与槽系统注入的实例一致）。
+
+**立即生效**：已同步热补丁运行中编译包
+`C:\Users\wangbaikang\.dsh\profiles\node_modules\@deepseek-ai\dsh-client-ui-conversation\lib\client.js`
+（构造函数 + `setView` 方法 + plugin 装配三处），刷新页面即可用；重新构建/安装源码后由源码版覆盖。
+
+**DSH Code 侧消费**（动态插件，无需源码改动）：侧栏打开文件/diff 时
+`docStore.add(tab)` 后调用 `ctx.get('sessions').scope(current).conversation.setView('editor')`（特性探测，
+无 `setView`/无当前会话时回退侧栏内联预览）；「编辑器」一级标签 = `conversation.view` 槽 entry
+（`id:'editor', order:20, label:'编辑器'`），内部为多文档/diff tab（顶部 tab 条 + 底部内容，占满中栏）。
+
+**待办**：#7 上游合并后，#1/#3/#6 仍按原规格推进（子槽拆分、editor 列、新会话按钮迁移）。
+
 ## 交付顺序建议
 
-1. 先做 #3 的子槽拆分（影响最小、收益最大：会话管理功能全量回归）。
-2. 再做 #6 的 `editor` 列（布局 + 槽 + 几何服务）。
-3. 最后 #1（随 #3 一并完成，删 shell 按钮即可）。
+1. ✅ #7（已实现）—— 编辑器标签 + 自动切换。
+2. 先做 #3 的子槽拆分（影响最小、收益最大：会话管理功能全量回归）。
+3. 再做 #6 的 `editor` 列（布局 + 槽 + 几何服务）。
+4. 最后 #1（随 #3 一并完成，删 shell 按钮即可）。
