@@ -21,6 +21,7 @@ export default {
     const sandboxPolicy = ctx.get('sandboxPolicy')
 
     const str = (v) => (v == null ? '' : String(v))
+    const root = () => (sandboxPolicy !== undefined && sandboxPolicy.workspaceRoot ? str(sandboxPolicy.workspaceRoot) : '')
 
     // 通用进程执行（显式 argv，无 shell 拼接）
     async function run(exe, cwd, args, maxBytes) {
@@ -29,7 +30,7 @@ export default {
         const bin = await subprocess.resolveExecutable(exe)
         const handle = subprocess.spawn({
           argv: [bin].concat(args.map(str)),
-          cwd,
+          cwd: cwd || root() || '.',
           stdio: {
             stdin: 'ignore',
             stdout: { maxBytes: maxBytes || 2 * 1024 * 1024, spill: { maxBytes: 8 * 1024 * 1024 } },
@@ -47,6 +48,7 @@ export default {
     }
 
     const git = (cwd, args) => run('git', cwd, args)
+    const pwsh = (script, args) => run('pwsh', root(), ['-NoProfile', '-NonInteractive', '-Command', script].concat((args || []).map(str)))
 
     harness.handle('ide.roots', async () => {
       const workspaces = []
@@ -99,6 +101,35 @@ export default {
       } catch (err) {
         return { error: err && err.message ? str(err.message) : str(err), path }
       }
+    })
+
+    harness.handle('ide.newFile', async (args) => {
+      if (fs === undefined) return { error: 'filesystem service unavailable' }
+      const path = str(args && args.path)
+      try {
+        const target = await fs.resolve(path)
+        await fs.writeText(target, '', { kind: 'createIfAbsent' })
+        return { ok: true, path: str(target.displayPath) }
+      } catch (err) { return { error: err && err.message ? str(err.message) : str(err), path } }
+    })
+
+    harness.handle('ide.mkdir', async (args) => {
+      const path = str(args && args.path)
+      const d = await pwsh('New-Item -ItemType Directory -Force -Path $args[0] | Out-Null', [path])
+      return { ok: d.ok, stderr: d.stderr, path }
+    })
+
+    harness.handle('ide.delete', async (args) => {
+      const path = str(args && args.path)
+      const d = await pwsh('Remove-Item -LiteralPath $args[0] -Recurse -Force', [path])
+      return { ok: d.ok, stderr: d.stderr, path }
+    })
+
+    harness.handle('ide.rename', async (args) => {
+      const from = str(args && args.from)
+      const to = str(args && args.to)
+      const d = await pwsh('Move-Item -LiteralPath $args[0] -Destination $args[1] -Force', [from, to])
+      return { ok: d.ok, stderr: d.stderr, from, to }
     })
 
     harness.handle('ide.git.status', async (args) => {
@@ -159,6 +190,31 @@ export default {
       if (paths.length === 0) return { ok: false, stderr: 'no paths' }
       const d = await git(cwd, ['reset', '-q', '--'].concat(paths))
       return { ok: d.ok, stderr: d.stderr }
+    })
+
+    harness.handle('ide.git.stageAll', async (args) => {
+      const cwd = str(args && args.cwd)
+      const d = await git(cwd, ['add', '-A'])
+      return { ok: d.ok, stderr: d.stderr }
+    })
+
+    harness.handle('ide.git.unstageAll', async (args) => {
+      const cwd = str(args && args.cwd)
+      const d = await git(cwd, ['reset', '-q', 'HEAD'])
+      return { ok: d.ok, stderr: d.stderr }
+    })
+
+    harness.handle('ide.git.discard', async (args) => {
+      const cwd = str(args && args.cwd)
+      const path = str(args && args.path)
+      const untracked = !!(args && args.untracked)
+      if (path === '') return { ok: false, stderr: 'no path' }
+      if (untracked) {
+        const d = await pwsh('Remove-Item -LiteralPath $args[0] -Recurse -Force', [path])
+        return { ok: d.ok, stderr: d.stderr, path }
+      }
+      const d = await git(cwd, ['checkout', '--', path])
+      return { ok: d.ok, stderr: d.stderr, path }
     })
 
     harness.handle('ide.git.commit', async (args) => {

@@ -39,8 +39,15 @@
 | `ide.readText` | `{ path, maxBytes? }` | `{ path, content, truncated, size } \| { error }` | 只读文本（默认 400KB 截断） |
 | `ide.git.status` | `{ cwd }` | `{ branch, changes[], notRepo, error }` | `git status --porcelain=v1 -z`，`changes[] = { xy, path, staged, unstaged, renameFrom }` |
 | `ide.git.diff` | `{ cwd, path }` | `{ stdout, stderr, ok, path }` | `git diff HEAD -- <path>`（含暂存 + 未暂存） |
+| `ide.newFile` | `{ path }` | `{ ok, path }` | `fs.writeText(createIfAbsent)` 新建空文件 |
+| `ide.mkdir` | `{ path }` | `{ ok, stderr }` | PowerShell `New-Item -ItemType Directory` |
+| `ide.delete` | `{ path }` | `{ ok, stderr }` | PowerShell `Remove-Item -Recurse -Force` |
+| `ide.rename` | `{ from, to }` | `{ ok, stderr }` | PowerShell `Move-Item` |
 | `ide.git.stage` | `{ cwd, paths[] }` | `{ ok, stderr }` | `git add -- <paths>` |
 | `ide.git.unstage` | `{ cwd, paths[] }` | `{ ok, stderr }` | `git reset -q -- <paths>` |
+| `ide.git.stageAll` | `{ cwd }` | `{ ok, stderr }` | `git add -A` |
+| `ide.git.unstageAll` | `{ cwd }` | `{ ok, stderr }` | `git reset -q HEAD` |
+| `ide.git.discard` | `{ cwd, path, untracked }` | `{ ok, stderr }` | 未跟踪删除文件；否则 `git checkout -- <path>` |
 | `ide.git.commit` | `{ cwd, message }` | `{ ok, stdout, stderr }` | `git commit -m <message>` |
 | `ide.search` | `{ cwd, query, caseSensitive? }` | `{ matches[], files, truncated, error }` | ripgrep 快路径（`--json`）+ 递归扫描回退，`match = { path, line, text }` |
 
