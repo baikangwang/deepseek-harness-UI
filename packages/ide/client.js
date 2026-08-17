@@ -60,19 +60,30 @@ export default {
       close: function (key) { const i = this.tabs.findIndex(function (t) { return t.key === key }); if (i < 0) return; this.tabs.splice(i, 1); if (this.activeId === key) { const next = this.tabs[i] || this.tabs[i - 1]; this.activeId = next ? next.key : null } this.emit() },
       setActive: function (key) { if (this.activeId !== key) { this.activeId = key; this.emit() } },
     }
-    // 自动切换到「编辑器」一级标签：以显式会话 id 直接调用 conversation 服务的
-    // setView(view, sessionId)（根上下文可调用，无需 cordis Context；动态插件
-    // 护栏不允许 sessions.scope(id) 返回的 Context）。失败回退内联预览。
-    function trySwitchEditor(current) {
+    // 视图切换：优先 conversation 服务 setView(view, sessionId)（补丁后可用），
+    // 回退为点击一级标签按钮（shipped 自带 onClick，绕开缓存/补丁问题）。
+    function setViewViaService(sessionId, viewId) {
       try {
-        if (!current) return false
+        if (!sessionId) return false
         const conv = ctx.get('conversation')
-        if (!conv || typeof conv.setView !== 'function') return false
-        conv.setView('editor', current)
-        return true
-      } catch (e) { return false }
+        if (conv && typeof conv.setView === 'function') { conv.setView(viewId, sessionId); return true }
+      } catch (e) {}
+      return false
     }
-    function openDoc(tab, current, fallback) { docStore.add(tab); if (!trySwitchEditor(current)) fallback() }
+    function clickTabNow(labels) {
+      try {
+        const tabs = document.querySelectorAll('[role="tab"]')
+        for (let i = 0; i < tabs.length; i++) {
+          const txt = (tabs[i].textContent || '').trim()
+          for (const l of labels) if (txt === l) { tabs[i].click(); return true }
+        }
+      } catch (e) {}
+      return false
+    }
+    function openDoc(tab, current) {
+      docStore.add(tab)
+      if (!setViewViaService(current, 'editor')) clickTabNow(['编辑器', 'Editor'])
+    }
 
     function Preview(props) { const lang = detectLang(props.path); const lines = props.content == null ? [] : props.content.split(/\r?\n/); return el('div', { className: 'dshide-view dshide-preview' }, el('div', { className: 'dshide-preview-header' }, el('button', { type: 'button', className: 'dshide-iconbtn', onClick: props.onBack }, el(Icon, { name: 'back', size: 14 })), el('span', { className: 'dshide-preview-path', title: props.path }, props.path || '')), props.loading ? el('div', { className: 'dshide-loading' }, '加载中…') : props.error ? el('div', { className: 'dshide-empty' }, props.error) : el('pre', { className: 'dshide-code' }, lines.map(function (ln, i) { return el('div', { key: i, className: 'dshide-codeline' }, el('span', { className: 'dshide-lineno' }, String(i + 1)), renderLine(ln, lang)) }), props.truncated ? el('div', { className: 'dshide-empty' }, '… 文件过大，已截断') : null)) }
     function DiffView(props) { const lines = (props.diff.stdout || '').split(/\r?\n/); return el('div', { className: 'dshide-view dshide-preview' }, el('div', { className: 'dshide-preview-header' }, el('button', { type: 'button', className: 'dshide-iconbtn', onClick: props.onBack }, el(Icon, { name: 'back', size: 14 })), el('span', { className: 'dshide-preview-path', title: props.diff.path }, props.diff.path || '')), props.diff.loading ? el('div', { className: 'dshide-loading' }, '加载中…') : (props.diff.stderr && !props.diff.stdout) ? el('div', { className: 'dshide-empty' }, props.diff.stderr) : el('pre', { className: 'dshide-code' }, lines.map(function (ln, i) { const cls = ln.indexOf('+') === 0 && ln.indexOf('+++') !== 0 ? 'dshide-diff-line add' : ln.indexOf('-') === 0 && ln.indexOf('---') !== 0 ? 'dshide-diff-line del' : ln.indexOf('@@') === 0 ? 'dshide-diff-line hunk' : 'dshide-diff-line'; return el('div', { key: i, className: cls }, ln || ' ') }))) }
@@ -140,7 +151,6 @@ export default {
 
     function ExplorerView(props) {
       const [expanded, setExpanded] = React.useState(function () { return new Set() })
-      const [preview, setPreview] = React.useState(null)
       const [showHidden, setShowHidden] = React.useState(false)
       const [filter, setFilter] = React.useState('')
       const [action, setAction] = React.useState(null)
@@ -150,7 +160,7 @@ export default {
       const options = (props.workspaces || []).map(function (w) { return { path: w.path, title: w.title || w.path } }).filter(function (o) { if (seen[o.path]) return false; seen[o.path] = true; return true })
       if (props.root && !seen[props.root]) options.unshift({ path: props.root, title: props.root })
       function toggle(p) { setExpanded(function (prev) { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n }) }
-      function openFile(path) { openDoc({ key: path, kind: 'file', path: path }, props.current, function () { setPreview({ path: path, loading: true }); host.call('ide.readText', { path: path }).then(function (r) { setPreview({ path: path, content: r && r.content, error: r && r.error, truncated: r && r.truncated }) }) }) }
+      function openFile(path) { openDoc({ key: path, kind: 'file', path: path }, props.current) }
       function refresh() { setExpanded(new Set()) }
       function move(src, dest) { if (src && src !== dest) host.call('ide.rename', { from: src, to: joinPath(dest, baseName(src)) }).then(refresh) }
       function paste() { setBusy(true); host.call('ide.paste', { dest: props.root }).then(function () { setBusy(false); refresh() }) }
@@ -167,7 +177,6 @@ export default {
         else if (a.kind === 'rename') host.call('ide.rename', { from: a.path, to: joinPath(dirnameOf(a.path), input.trim()) }).then(done)
         else if (a.kind === 'delete') host.call('ide.delete', { path: a.path }).then(done)
       }
-      if (preview) return el(Preview, { path: preview.path, content: preview.content, error: preview.error, loading: preview.loading, truncated: preview.truncated, onBack: function () { setPreview(null) } })
       const actionLabel = action ? (action.kind === 'newfile' ? '新建文件' : action.kind === 'newdir' ? '新建文件夹' : action.kind === 'rename' ? '重命名为' : '删除 ' + action.name + ' ?') : ''
       return el('div', { className: 'dshide-view' }, el('div', { className: 'dshide-toolbar' }, el('select', { className: 'dshide-select', value: props.root || '', onChange: function (e) { props.setRoot(e.target.value); refresh() } }, options.map(function (o) { return el('option', { key: o.path, value: o.path }, o.title) })), el('button', { type: 'button', className: 'dshide-iconbtn', title: '新建文件', onClick: function () { startAction('newfile', props.root, '') } }, el(Icon, { name: 'file', size: 15 })), el('button', { type: 'button', className: 'dshide-iconbtn', title: '新建文件夹', onClick: function () { startAction('newdir', props.root, '') } }, el(Icon, { name: 'folder', size: 15 })), el('button', { type: 'button', className: 'dshide-iconbtn', title: '粘贴', onClick: paste, disabled: busy }, el(Icon, { name: 'check', size: 15 })), el('button', { type: 'button', className: 'dshide-iconbtn', title: '刷新', onClick: refresh }, el(Icon, { name: 'refresh', size: 15 }))), el('input', { className: 'dshide-search-input', style: { margin: '6px 8px', flex: 'none' }, placeholder: '按名称查找…', value: filter, onChange: function (e) { setFilter(e.target.value) } }), action ? el('div', { className: 'dshide-actionbar' }, el('span', { className: 'dshide-actionbar-label' }, actionLabel), action.kind !== 'delete' ? el('input', { className: 'dshide-actionbar-input', autoFocus: true, value: input, onChange: function (e) { setInput(e.target.value) }, onKeyDown: function (e) { if (e.key === 'Enter') runAction(); if (e.key === 'Escape') cancel() } }) : null, el('button', { type: 'button', className: 'dshide-iconbtn', title: '确认', onClick: runAction, disabled: busy }, el(Icon, { name: action.kind === 'delete' ? 'trash' : 'check', size: 14 })), el('button', { type: 'button', className: 'dshide-iconbtn', title: '取消', onClick: cancel }, el(Icon, { name: 'close', size: 14 }))) : null, el('div', { className: 'dshide-scroll' }, props.root ? el(Tree, { path: props.root, depth: 0, expanded: expanded, toggle: toggle, onOpen: openFile, showHidden: showHidden, filter: filter, onRename: function (p, n) { startAction('rename', p, n) }, onDelete: function (p, n) { startAction('delete', p, n) }, onMove: move }) : el('div', { className: 'dshide-empty' }, '暂无工作区，请先在会话管理中新建会话或添加工作区。')))
     }
@@ -177,7 +186,6 @@ export default {
       const [cs, setCs] = React.useState(false)
       const [loading, setLoading] = React.useState(false)
       const [result, setResult] = React.useState(null)
-      const [preview, setPreview] = React.useState(null)
       function run() {
         if (!query.trim()) return
         setLoading(true); setResult(null)
@@ -185,15 +193,13 @@ export default {
           setResult(r || { error: 'no response', matches: [], files: 0, truncated: false }); setLoading(false)
         })
       }
-      function openFile(path) { openDoc({ key: path, kind: 'file', path: path }, props.current, function () { setPreview({ path: path, loading: true }); host.call('ide.readText', { path: path }).then(function (r) { setPreview({ path: path, content: r && r.content, error: r && r.error, truncated: r && r.truncated }) }) }) }
-      if (preview) return el(Preview, { path: preview.path, content: preview.content, error: preview.error, loading: preview.loading, truncated: preview.truncated, onBack: function () { setPreview(null) } })
+      function openFile(path) { openDoc({ key: path, kind: 'file', path: path }, props.current) }
       return el('div', { className: 'dshide-view' }, el('div', { className: 'dshide-search-box' }, el('input', { className: 'dshide-search-input', placeholder: '在工作区中搜索…', value: query, onChange: function (e) { setQuery(e.target.value) }, onKeyDown: function (e) { if (e.key === 'Enter') run() } }), el('button', { type: 'button', className: 'dshide-iconbtn', title: '区分大小写', onClick: function () { setCs(function (v) { return !v }) }, style: cs ? { color: 'var(--dsw-alias-brand-primary)' } : undefined }, 'Aa'), el('button', { type: 'button', className: 'dshide-iconbtn', title: '搜索', onClick: run }, el(Icon, { name: 'search', size: 15 }))), loading ? el('div', { className: 'dshide-loading' }, '搜索中…') : result == null ? el('div', { className: 'dshide-empty' }, '输入关键字，在工作区文件中搜索内容。') : result.error ? el('div', { className: 'dshide-empty' }, result.error) : el('div', { className: 'dshide-results' }, el('div', { className: 'dshide-result-summary' }, result.matches.length + ' 处匹配 · ' + result.files + ' 个文件' + (result.truncated ? '（已截断）' : '')), result.matches.length === 0 ? el('div', { className: 'dshide-empty' }, '未找到匹配结果。') : result.matches.map(function (m, i) { return el('div', { key: i, className: 'dshide-match', onClick: function () { openFile(m.path) } }, el('div', { className: 'dshide-match-path' }, m.path), el('div', { className: 'dshide-match-line' }, el('span', { className: 'dshide-match-lineno' }, String(m.line)), el('span', { className: 'dshide-match-text' }, m.text))) })))
     }
 
     function ScmView(props) {
       const [status, setStatus] = React.useState(null)
       const [loading, setLoading] = React.useState(false)
-      const [diff, setDiff] = React.useState(null)
       const [message, setMessage] = React.useState('')
       const [busy, setBusy] = React.useState(false)
       function refresh() {
@@ -205,13 +211,12 @@ export default {
       }
       React.useEffect(function () { refresh() }, [props.root])
       function act(method, payload) { setBusy(true); host.call(method, payload).then(function (r) { setBusy(false); refresh() }) }
-      function openDiff(path) { openDoc({ key: 'diff:' + path, kind: 'diff', path: path, cwd: props.root }, props.current, function () { setDiff({ path: path, loading: true }); host.call('ide.git.diff', { cwd: props.root, path: path }).then(function (r) { setDiff({ path: path, stdout: r && r.stdout, stderr: r && r.stderr, ok: r && r.ok }) }) }) }
+      function openDiff(path) { openDoc({ key: 'diff:' + path, kind: 'diff', path: path, cwd: props.root }, props.current) }
       function commit() {
         if (!message.trim()) return
         setBusy(true)
         host.call('ide.git.commit', { cwd: props.root, message: message }).then(function (r) { setBusy(false); setMessage(''); refresh() })
       }
-      if (diff) return el(DiffView, { diff: diff, onBack: function () { setDiff(null) } })
       const changes = (status && status.changes) || []
       const staged = changes.filter(function (c) { return c.staged && c.staged !== ' ' })
       const unstaged = changes.filter(function (c) { return !c.staged || c.staged === ' ' })
@@ -248,7 +253,17 @@ export default {
       for (const w of workspaces) for (const sid of w.sessionIds) if (!workspaceBySession[sid]) workspaceBySession[sid] = w.title
       const visible = function (s) { return s && s.origin !== 'subagent' && !archived.has(s.id) && (!s.blank || s.id === current) }
       const label = function (s) { return workspaceBySession[s.id] || (s.cwd ? s.cwd.replace(/[\\/]+$/, '').split(/[\\/]/).pop() : '') }
-      function open(id) { if (sessionsSvc) sessionsSvc.open(id) }
+      function open(id) {
+        if (sessionsSvc) sessionsSvc.open(id)
+        // 选择会话时强制切回「对话」一级标签（优先服务，精确到目标会话；
+        // 失败则等切换完成后点第一个标签）。
+        if (!setViewViaService(id, 'chat')) {
+          window.setTimeout(function () {
+            const tabs = document.querySelectorAll('[role="tab"]')
+            if (tabs.length > 0) tabs[0].click()
+          }, 120)
+        }
+      }
       function newSession() { if (workspacesSvc) workspacesSvc.startSession() }
       function addWorkspace() { if (workspacesSvc) workspacesSvc.pickDirectory().then(function (p) { if (p) workspacesSvc.create({ path: p }) }) }
       function forkSession(id) { if (sessionsSvc) sessionsSvc.fork({ sessionId: id, increaseTitle: true }).then(function (cid) { if (cid && sessionsSvc) sessionsSvc.open(cid) }) }
