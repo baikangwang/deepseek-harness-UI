@@ -80,6 +80,20 @@ export default {
       } catch (e) {}
       return false
     }
+    // 切回「对话」标签：优先按标签文案（对话/Chat），回退到第一个 tab（chat 恒为 order 0）。
+    function clickChatTab() {
+      try {
+        const tabs = document.querySelectorAll('[role="tab"]')
+        let first = null
+        for (let i = 0; i < tabs.length; i++) {
+          const txt = (tabs[i].textContent || '').trim()
+          if (!first) first = tabs[i]
+          if (txt === '对话' || txt === 'Chat') { tabs[i].click(); return true }
+        }
+        if (first) { first.click(); return true }
+      } catch (e) {}
+      return false
+    }
     function openDoc(tab, current) {
       docStore.add(tab)
       if (!setViewViaService(current, 'editor')) clickTabNow(['编辑器', 'Editor'])
@@ -255,13 +269,13 @@ export default {
       const label = function (s) { return workspaceBySession[s.id] || (s.cwd ? s.cwd.replace(/[\\/]+$/, '').split(/[\\/]/).pop() : '') }
       function open(id) {
         if (sessionsSvc) sessionsSvc.open(id)
-        // 选择会话时强制切回「对话」一级标签（优先服务，精确到目标会话；
-        // 失败则等切换完成后点第一个标签）。
-        if (!setViewViaService(id, 'chat')) {
-          window.setTimeout(function () {
-            const tabs = document.querySelectorAll('[role="tab"]')
-            if (tabs.length > 0) tabs[0].click()
-          }, 120)
+        // 强制切回「对话」标签。服务路径（补丁后可达）优先；否则走 DOM 兜底：
+        // 点当前会话可立即点；跨会话切换是异步的，用递增延时重试，确保点在新会话的标签上。
+        if (setViewViaService(id, 'chat')) return
+        if (id === current) {
+          clickChatTab()
+        } else {
+          [150, 350, 650, 1100].forEach(function (d) { window.setTimeout(clickChatTab, d) })
         }
       }
       function newSession() { if (workspacesSvc) workspacesSvc.startSession() }
