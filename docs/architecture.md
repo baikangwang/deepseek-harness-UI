@@ -39,7 +39,10 @@
 | `ide.readText` | `{ path, maxBytes? }` | `{ path, content, truncated, size } \| { error }` | 只读文本（默认 400KB 截断） |
 | `ide.git.status` | `{ cwd }` | `{ branch, changes[], notRepo, error }` | `git status --porcelain=v1 -z`，`changes[] = { xy, path, staged, unstaged, renameFrom }` |
 | `ide.git.diff` | `{ cwd, path }` | `{ stdout, stderr, ok, path }` | `git diff HEAD -- <path>`（含暂存 + 未暂存） |
-| `ide.search` | `{ cwd, query, caseSensitive? }` | `{ matches[], files, truncated, error }` | 递归扫描（有界），`match = { path, line, text }` |
+| `ide.git.stage` | `{ cwd, paths[] }` | `{ ok, stderr }` | `git add -- <paths>` |
+| `ide.git.unstage` | `{ cwd, paths[] }` | `{ ok, stderr }` | `git reset -q -- <paths>` |
+| `ide.git.commit` | `{ cwd, message }` | `{ ok, stdout, stderr }` | `git commit -m <message>` |
+| `ide.search` | `{ cwd, query, caseSensitive? }` | `{ matches[], files, truncated, error }` | ripgrep 快路径（`--json`）+ 递归扫描回退，`match = { path, line, text }` |
 
 ### git 走 `subprocess` 显式 argv
 
@@ -47,7 +50,7 @@ git 通过 `ctx.subprocess.spawn({ argv, cwd, stdio })` 执行，**不经过 she
 
 ### 搜索的取舍
 
-采用 `ctx.fs` 递归扫描（有界：≤400 文件 / 200 命中，跳过 `.git`/`node_modules`/`dist` 与二进制、大文件），自包含、不依赖 `rg` 是否安装。后续增加 ripgrep 快路径（见阶段计划）。
+优先用 ripgrep 快路径（`rg --json`，显式 `--glob` 排除 `node_modules`/`.git`/`dist`/`build`，失败或 `rg` 缺失时回退到 `ctx.fs` 递归扫描）。递归扫描有界（≤400 文件 / 200 命中，跳过二进制与大文件），自包含、不依赖 `rg` 是否安装。
 
 ## 5. 数据流
 

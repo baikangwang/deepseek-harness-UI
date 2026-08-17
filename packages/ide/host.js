@@ -2,10 +2,13 @@
  * DSH Code — Host 能力层。
  *
  * 以动态 Cordis 插件的 Host 半身运行：提供 `ide.*` 私有 RPC（文件列表/读取、
- * git 状态/diff、工作区内容搜索）。所有能力都来自宿主服务，绝不自行拼 shell：
+ * git 状态/diff/stage/unstage/commit、工作区内容搜索）。所有能力都来自宿主服务，
+ * 绝不自行拼 shell：
  *  - fs        -> ctx.get('fs')
- *  - git       -> ctx.get('subprocess') 显式 argv
+ *  - git/rg    -> ctx.get('subprocess') 显式 argv
  *  - 工作区根  -> ctx.get('workspaceRegistry') / ctx.get('sandboxPolicy')
+ *
+ * 搜索优先走 ripgrep（`rg --json`，可用时），失败/缺失时回退到递归扫描。
  *
  * 正式化路径（P3）：把这里的 handler 抽成一个 `ctx.ide` Service，Client→Host 走
  * `ctx.remote`，`harness.handle` 仅保留给动态插件形态。
@@ -19,7 +22,32 @@ export default {
 
     const str = (v) => (v == null ? '' : String(v))
 
-    // ---- 工作区根 ----
+    // 通用进程执行（显式 argv，无 shell 拼接）
+    async function run(exe, cwd, args, maxBytes) {
+      if (subprocess === undefined) return { ok: false, exitCode: null, stdout: '', stderr: 'subprocess service unavailable', spawnFailed: true }
+      try {
+        const bin = await subprocess.resolveExecutable(exe)
+        const handle = subprocess.spawn({
+          argv: [bin].concat(args.map(str)),
+          cwd,
+          stdio: {
+            stdin: 'ignore',
+            stdout: { maxBytes: maxBytes || 2 * 1024 * 1024, spill: { maxBytes: 8 * 1024 * 1024 } },
+            stderr: { maxBytes: 128 * 1024 },
+          },
+          graceMs: 3000,
+        })
+        const outcome = await handle.done
+        const out = handle.collected.stdout ? handle.collected.stdout.readFrom(0).text : ''
+        const err = handle.collected.stderr ? handle.collected.stderr.readFrom(0).text : ''
+        return { ok: outcome.exitCode === 0, exitCode: outcome.exitCode, stdout: out, stderr: err, spawnFailed: false }
+      } catch (e) {
+        return { ok: false, exitCode: null, stdout: '', stderr: e && e.message ? str(e.message) : str(e), spawnFailed: true }
+      }
+    }
+
+    const git = (cwd, args) => run('git', cwd, args)
+
     harness.handle('ide.roots', async () => {
       const workspaces = []
       if (workspaceRegistry !== undefined) {
@@ -33,7 +61,6 @@ export default {
       return { root, workspaces }
     })
 
-    // ---- 单层目录 ----
     harness.handle('ide.listDir', async (args) => {
       if (fs === undefined) return { error: 'filesystem service unavailable' }
       const path = str(args && args.path)
@@ -58,7 +85,6 @@ export default {
       }
     })
 
-    // ---- 只读文本（预览） ----
     harness.handle('ide.readText', async (args) => {
       if (fs === undefined) return { error: 'filesystem service unavailable' }
       const path = str(args && args.path)
@@ -74,30 +100,6 @@ export default {
         return { error: err && err.message ? str(err.message) : str(err), path }
       }
     })
-
-    // ---- git（subprocess 显式 argv） ----
-    async function git(cwd, args) {
-      if (subprocess === undefined) return { ok: false, exitCode: null, stdout: '', stderr: 'subprocess service unavailable' }
-      try {
-        const exe = await subprocess.resolveExecutable('git')
-        const handle = subprocess.spawn({
-          argv: [exe].concat(args.map(str)),
-          cwd,
-          stdio: {
-            stdin: 'ignore',
-            stdout: { maxBytes: 2 * 1024 * 1024, spill: { maxBytes: 8 * 1024 * 1024 } },
-            stderr: { maxBytes: 128 * 1024 },
-          },
-          graceMs: 3000,
-        })
-        const outcome = await handle.done
-        const out = handle.collected.stdout ? handle.collected.stdout.readFrom(0).text : ''
-        const err = handle.collected.stderr ? handle.collected.stderr.readFrom(0).text : ''
-        return { ok: outcome.exitCode === 0, exitCode: outcome.exitCode, stdout: out, stderr: err }
-      } catch (e) {
-        return { ok: false, exitCode: null, stdout: '', stderr: e && e.message ? str(e.message) : str(e) }
-      }
-    }
 
     harness.handle('ide.git.status', async (args) => {
       const cwd = str(args && args.cwd)
@@ -143,13 +145,60 @@ export default {
       return { stdout: d.stdout, ok: d.ok, stderr: d.stderr, path }
     })
 
-    // ---- 工作区内容搜索（递归扫描，有界） ----
+    harness.handle('ide.git.stage', async (args) => {
+      const cwd = str(args && args.cwd)
+      const paths = (args && args.paths && args.paths.length) ? args.paths.map(str) : []
+      if (paths.length === 0) return { ok: false, stderr: 'no paths' }
+      const d = await git(cwd, ['add', '--'].concat(paths))
+      return { ok: d.ok, stdout: d.stdout, stderr: d.stderr }
+    })
+
+    harness.handle('ide.git.unstage', async (args) => {
+      const cwd = str(args && args.cwd)
+      const paths = (args && args.paths && args.paths.length) ? args.paths.map(str) : []
+      if (paths.length === 0) return { ok: false, stderr: 'no paths' }
+      const d = await git(cwd, ['reset', '-q', '--'].concat(paths))
+      return { ok: d.ok, stderr: d.stderr }
+    })
+
+    harness.handle('ide.git.commit', async (args) => {
+      const cwd = str(args && args.cwd)
+      const message = str(args && args.message).trim()
+      if (message === '') return { ok: false, stderr: 'empty commit message' }
+      const d = await git(cwd, ['commit', '-m', message])
+      return { ok: d.ok, stdout: d.stdout, stderr: d.stderr }
+    })
+
     harness.handle('ide.search', async (args) => {
       if (fs === undefined) return { error: 'filesystem service unavailable', matches: [], files: 0, truncated: false }
       const cwd = str(args && args.cwd)
       const query = str(args && args.query)
       const caseSensitive = !!(args && args.caseSensitive)
       if (query === '' || cwd === '') return { error: '', matches: [], files: 0, truncated: false }
+
+      // 快路径：ripgrep（可用时）
+      if (subprocess !== undefined) {
+        const rgArgs = ['--json', '--no-config', '--line-number', '-e', query,
+          '--glob', '!**/node_modules/**', '--glob', '!**/.git/**', '--glob', '!**/dist/**', '--glob', '!**/build/**',
+          caseSensitive ? '--case-sensitive' : '--ignore-case']
+        const rg = await run('rg', cwd, rgArgs)
+        if (!rg.spawnFailed && (rg.exitCode === 0 || rg.exitCode === 1)) {
+          const matches = []
+          for (const line of rg.stdout.split('\n')) {
+            if (line === '') continue
+            try {
+              const obj = JSON.parse(line)
+              if (obj && obj.type === 'match' && obj.data) {
+                matches.push({ path: str(obj.data.path && obj.data.path.text), line: obj.data.line_number, text: str(obj.data.lines && obj.data.lines.text).slice(0, 240) })
+              }
+            } catch (e) { /* skip */ }
+          }
+          const truncated = matches.length > 200
+          return { error: '', matches: matches.slice(0, 200), files: new Set(matches.map((m) => m.path)).size, truncated }
+        }
+      }
+
+      // 回退：递归扫描
       const q = caseSensitive ? query : query.toLowerCase()
       const matches = []
       let files = 0
@@ -191,9 +240,9 @@ export default {
         const rootTarget = await fs.resolve(cwd)
         await walk(rootTarget)
       } catch (err) {
-        return { error: err && err.message ? str(err.message) : str(err), matches, files, truncated }
+        return { error: err && err.message ? str(err.message) : str(err), matches, files: new Set(matches.map((m) => m.path)).size, truncated }
       }
-      return { error: '', matches, files, truncated }
+      return { error: '', matches, files: new Set(matches.map((m) => m.path)).size, truncated }
     })
   },
 }
