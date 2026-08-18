@@ -1,4 +1,4 @@
-{
+﻿{
   "extends": "../../../tsconfig.base.client.json",
   "compilerOptions": {
     "rootDir": "src",
@@ -13,6 +13,18 @@
     },
     {
       "path": "../../runtime-diagnostics/invariants"
+    },
+    {
+      "path": "../locale"
+    },
+    {
+      "path": "../ui-conversation"
+    },
+    {
+      "path": "../ui-sidebar"
+    },
+    {
+      "path": "../web-react"
     },
     {
       "path": "../../typert/protocol"

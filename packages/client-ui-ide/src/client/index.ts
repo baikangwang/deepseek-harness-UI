@@ -9,9 +9,9 @@
 import type { Context } from '@deepseek-ai/cordis'
 import ideRemote from '@deepseek-ai/dsh-ide/remote'
 import type { IdeRemoteFace } from '@deepseek-ai/dsh-ide/types'
-// Type-only: resolve the injected client service augmentations.
+// Type-only: resolve the injected client service augmentations + branded ids.
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type {} from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionId, WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pull the SlotMap merges we register into (sidebar.workspaces,
 // conversation.view) through the contract module.
 import type {} from './slots.ts'
@@ -29,8 +29,10 @@ function clickTabNow(labels: string[]): boolean {
   try {
     const tabs = document.querySelectorAll('[role="tab"]')
     for (let i = 0; i < tabs.length; i++) {
-      const txt = (tabs[i].textContent ?? '').trim()
-      for (const l of labels) if (txt === l) { (tabs[i] as HTMLElement).click(); return true }
+      const tab = tabs[i]
+      if (!tab) continue
+      const txt = (tab.textContent ?? '').trim()
+      for (const l of labels) if (txt === l) { (tab as HTMLElement).click(); return true }
     }
   } catch { /* no-op */ }
   return false
@@ -51,31 +53,30 @@ export async function apply(ctx: Context): Promise<void> {
     ide,
     rpc,
     store,
-    openEditor: undefined,
     openDoc: (tab) => {
       store.add(tab)
       clickTabNow(['编辑器', 'Editor'])
     },
     sessions: {
-      open: (id) => { ctx.sessions.open(id) },
+      open: (id) => { ctx.sessions.open(id as SessionId) },
       search: async (query, signal) => {
         const result = await ctx.sessions.search(query, signal)
         if (!result.ok) throw new Error(result.error.message)
         return result.value
       },
       fork: (id) => {
-        ctx.sessions.fork({ sessionId: id, increaseTitle: true })
+        ctx.sessions.fork({ sessionId: id as SessionId, increaseTitle: true })
           .then((childId) => { ctx.sessions.open(childId) })
           .catch(() => { /* fork or child-open failure keeps the current selection */ })
       },
-      archive: (id) => { void ctx.workspaces.archiveSession(id) },
+      archive: (id) => { void ctx.workspaces.archiveSession(id as SessionId) },
     },
     workspaces: {
       startSession: () => { ctx.workspaces.startSession() },
       pickDirectory: () => ctx.workspaces.pickDirectory(),
       create: (input) => ctx.workspaces.create(input),
-      rename: (id, title) => ctx.workspaces.rename(id, title),
-      delete: (id) => ctx.workspaces.delete(id),
+      rename: (id, title) => ctx.workspaces.rename(id as WorkspaceId, title),
+      delete: (id) => ctx.workspaces.delete(id as WorkspaceId),
     },
   }
 

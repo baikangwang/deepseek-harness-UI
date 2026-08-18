@@ -9,7 +9,7 @@
 import { createElement, useEffect, useState } from 'react'
 import type { IdeInjected } from './slots.ts'
 import { Icon } from './icons.tsx'
-import { baseName, detectLang, renderLine, rpc } from './lib.ts'
+import { baseName, detectLang, renderLine } from './lib.ts'
 
 function FileEditor(props: { path: string; injected: IdeInjected }): ReturnType<typeof createElement> {
   const { ide, rpc: call } = props.injected

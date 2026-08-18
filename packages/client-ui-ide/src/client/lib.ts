@@ -72,7 +72,7 @@ export function buildRules(lang: string): Array<[RegExp, string]> {
   if (lang === 'json') return [[/"(?:[^"\\]|\\.)*"(?=\s*:)/g, 'tok-json-key'], [/"(?:[^"\\]|\\.)*"/g, 'tok-str'], [/-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b/gi, 'tok-num'], [/\b(?:true|false|null)\b/g, 'tok-bool']]
   if (lang === 'html') return [[/<!--[\s\S]*?-->/g, 'tok-com'], [/<\/?[a-zA-Z][a-zA-Z0-9-]*/g, 'tok-tag'], [/\/?>/g, 'tok-tag'], [/[a-zA-Z-]+(?==")/g, 'tok-attr'], [/"[^"]*"/g, 'tok-str']]
   if (lang === 'css') return [[/\/\*[\s\S]*?\*\//g, 'tok-com'], [/[a-zA-Z-]+(?=\s*:)/g, 'tok-prop'], [/#[0-9a-fA-F]{3,8}\b/g, 'tok-num'], [/-?\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|s|ms|fr)?\b/gi, 'tok-num'], [/"[^"]*"|'[^']*'/g, 'tok-str']]
-  const kws = (KW[lang] ?? KW.js).split(' ').join('|')
+  const kws = ((KW[lang] ?? KW.js) || '').split(' ').join('|')
   const lineComment = (lang === 'py' || lang === 'sh' || lang === 'yaml') ? /#[^\n]*/g : /\/\/[^\n]*/g
   return [[/\/\*[\s\S]*?\*\//g, 'tok-com'], [lineComment, 'tok-com'], [/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g, 'tok-str'], [new RegExp(`\\b(?:${kws})\\b`, 'g'), 'tok-kw'], [/-?\b\d+(?:\.\d+)?\b/g, 'tok-num']]
 }
@@ -88,7 +88,7 @@ export function tokenize(line: string, rules: Array<[RegExp, string]>): Array<[s
       const m = r[0].exec(line)
       if (m && m.index === i && (best === null || m[0].length > best[0].length)) best = [m[0], r[1]]
     }
-    if (best) { out.push(best); i += best[0].length } else { out.push([line[i], null]); i += 1 }
+    if (best) { out.push(best); i += best[0].length } else { out.push([line[i] ?? '', null]); i += 1 }
   }
   return out
 }
@@ -96,5 +96,5 @@ export function tokenize(line: string, rules: Array<[RegExp, string]>): Array<[s
 /** Render one source line with token spans. */
 export function renderLine(line: string, lang: string): ReturnType<typeof createElement> {
   const segs = tokenize(line, buildRules(lang))
-  return createElement('span', { className: 'dshide-linetext' }, segs.map((s, i) => (s[1] ? createElement('span', { key: i, className: s[1] }, s[0]) : s[0])))
+  return createElement('span', { className: 'dshide-linetext' }, segs.map((s, i) => (s[1] ? createElement('span', { key: i, className: s[1] }, s[0] ?? '') : s[0] ?? '')))
 }

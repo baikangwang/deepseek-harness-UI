@@ -16,8 +16,8 @@ type ViewInjected = Pick<IdeInjected, 'ide' | 'rpc' | 'openDoc' | 'sessions' | '
 /* Explorer                                                           */
 /* ------------------------------------------------------------------ */
 
-interface ExplorerProps extends ViewInjected {
-  root?: string
+interface ExplorerProps extends Pick<ViewInjected, 'ide' | 'rpc' | 'openDoc'> {
+  root?: string | undefined
   setRoot: (p: string) => void
   workspaces: Array<{ path: string; title?: string }>
 }
@@ -29,7 +29,7 @@ interface TreeRow {
   size: number | null
 }
 
-function Tree(props: { path: string; depth: number; expanded: Set<string>; toggle: (p: string) => void; onOpen: (p: string) => void; showHidden: boolean; filter: string; onRename: (p: string, n: string) => void; onDelete: (p: string, n: string) => void; onMove: (src: string, dest: string) => void; injected: ViewInjected }): ReturnType<typeof createElement> {
+function Tree(props: { path: string; depth: number; expanded: Set<string>; toggle: (p: string) => void; onOpen: (p: string) => void; showHidden: boolean; filter: string; onRename: (p: string, n: string) => void; onDelete: (p: string, n: string) => void; onMove: (src: string, dest: string) => void; injected: Pick<ViewInjected, 'ide' | 'rpc' | 'openDoc'> }): ReturnType<typeof createElement> {
   const { ide, rpc } = props.injected
   const el = createElement
   const isOpen = props.depth === 0 || props.expanded.has(props.path)
@@ -102,7 +102,7 @@ export function ExplorerView(props: ExplorerProps): ReturnType<typeof createElem
 /* ------------------------------------------------------------------ */
 
 interface SearchProps extends ViewInjected {
-  root?: string
+  root?: string | undefined
 }
 
 export function SearchView(props: SearchProps): ReturnType<typeof createElement> {
@@ -126,7 +126,7 @@ export function SearchView(props: SearchProps): ReturnType<typeof createElement>
 /* ------------------------------------------------------------------ */
 
 interface ScmProps extends ViewInjected {
-  root?: string
+  root?: string | undefined
 }
 
 interface ScmStatus {
@@ -150,7 +150,7 @@ export function ScmView(props: ScmProps): ReturnType<typeof createElement> {
   }
   useEffect(() => { refresh() }, [props.root])
   const act = (fn: () => Promise<unknown>): void => { setBusy(true); void fn().then(() => { setBusy(false); refresh() }) }
-  const openDiff = (path: string): void => { openDoc({ key: `diff:${path}`, kind: 'diff', path, cwd: props.root }) }
+  const openDiff = (path: string): void => { openDoc({ key: `diff:${path}`, kind: 'diff', path, ...(props.root ? { cwd: props.root } : {}) }) }
   const commit = (): void => {
     if (!message.trim()) return
     setBusy(true)
@@ -223,16 +223,18 @@ export function SessionView(props: SessionProps): ReturnType<typeof createElemen
   const q = query.trim().toLowerCase()
   const workspaceBySession: Record<string, string> = {}
   for (const w of workspaceList) for (const sid of w.sessionIds) if (!workspaceBySession[sid]) workspaceBySession[sid] = w.title
-  const visible = (s: SessionLike | undefined): boolean => !!s && s.origin !== 'subagent' && !archived.has(s.id) && (!s.blank || s.id === current)
+  const visible = (s: SessionLike | undefined): s is SessionLike => !!s && s.origin !== 'subagent' && !archived.has(s.id) && (!s.blank || s.id === current)
   const label = (s: SessionLike): string => workspaceBySession[s.id] || (s.cwd ? s.cwd.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? '' : '')
   const clickChatTab = (): boolean => {
     try {
       const tabs = document.querySelectorAll('[role="tab"]')
       let first: HTMLElement | null = null
       for (let i = 0; i < tabs.length; i++) {
-        const txt = (tabs[i].textContent ?? '').trim()
-        if (!first) first = tabs[i] as HTMLElement
-        if (txt === '对话' || txt === 'Chat') { (tabs[i] as HTMLElement).click(); return true }
+        const tab = tabs[i]
+        if (!tab) continue
+        const txt = (tab.textContent ?? '').trim()
+        if (!first) first = tab as HTMLElement
+        if (txt === '对话' || txt === 'Chat') { (tab as HTMLElement).click(); return true }
       }
       if (first) { first.click(); return true }
     } catch { /* no-op */ }
@@ -253,7 +255,6 @@ export function SessionView(props: SessionProps): ReturnType<typeof createElemen
     if (a.kind === 'wrename' && input.trim()) workspaces.rename(a.id, input.trim()).then(done)
     else if (a.kind === 'wdelete') workspaces.delete(a.id).then(done)
   }
-  const sessionState = (s: SessionLike): string => { if ((s as unknown as { pendingInteraction?: boolean }).pendingInteraction) return 'warning'; if ((s as unknown as { running?: boolean }).running) return 'ongoing'; if ((s as unknown as { completed?: boolean }).completed) return 'done'; return 'idle' }
   const sessionRow = (s: SessionLike, indent: boolean): ReturnType<typeof createElement> => el('div', { key: s.id, className: `dshide-row${s.id === current ? ' selected' : ''}`, style: indent ? { paddingLeft: '18px' } : undefined, title: s.displayTitle, onClick: () => { open(s.id) } }, el('span', { className: 'dshide-dot' }), el('span', { className: 'dshide-name' }, s.displayTitle || s.id), el('span', { className: 'dshide-time' }, relTime(s.updatedAt)), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: '派生会话', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); forkSession(s.id) } }, el(Icon, { name: 'scm', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '归档', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); archiveSession(s.id) } }, el(Icon, { name: 'trash', size: 13 }))))
   const workspaceRow = (w: typeof workspaceList[number]): ReturnType<typeof createElement> => {
     const members = (w.sessionIds ?? []).map((id) => byId[id]).filter(visible).sort((a: SessionLike, b: SessionLike) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
@@ -261,16 +262,21 @@ export function SessionView(props: SessionProps): ReturnType<typeof createElemen
     return el('div', { key: w.workspaceId }, el('div', { className: 'dshide-wsgroup-title', title: w.path, onClick: () => { toggleGroup(w.workspaceId) } }, el('span', { className: `dshide-arrow${isOpen ? ' open' : ''}` }, el(Icon, { name: 'chevron', size: 12 })), el(Icon, { name: 'folder', size: 14, className: 'dshide-glyph' }), el('span', { className: 'dshide-name' }, w.title), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名工作区', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); setAction({ kind: 'wrename', id: w.workspaceId, name: w.title }); setInput(w.title) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除工作区', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); setAction({ kind: 'wdelete', id: w.workspaceId, name: w.title }) } }, el(Icon, { name: 'trash', size: 13 })))), isOpen ? members.map((s) => sessionRow(s, true)) : null)
   }
   const toggleGroup = (id: string): void => { setExpanded((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n }) }
-  let body: ReturnType<typeof createElement>
+  let body: ReturnType<typeof createElement> | Array<ReturnType<typeof createElement>>
   if (q !== '') {
     const local = ids.map((id) => byId[id]).filter(visible).filter((s) => (s.displayTitle ?? '').toLowerCase().includes(q) || label(s).toLowerCase().includes(q)).sort((a: SessionLike, b: SessionLike) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
     const content: unknown[] = results?.items ?? []
     const merged: Array<{ id: string; title: string; ws: string; snippet?: string }> = local.map((s) => ({ id: s.id, title: s.displayTitle ?? s.id, ws: label(s) }))
     const seenIds: Record<string, boolean> = {}
     merged.forEach((m) => { seenIds[m.id] = true })
-    content.forEach((c) => { const ci = c as { sessionId?: string; snippet?: string }; if (ci.sessionId && !seenIds[ci.sessionId] && byId[ci.sessionId]) merged.push({ id: ci.sessionId, title: byId[ci.sessionId].displayTitle ?? ci.sessionId, ws: label(byId[ci.sessionId]), snippet: ci.snippet }) })
-    body = merged.slice(0, 20).map((m) => el('div', { key: m.id, className: 'dshide-row', onClick: () => { open(m.id) } }, el('span', { className: 'dshide-dot' }), el('span', { className: 'dshide-name' }, m.title), m.ws ? el('span', { className: 'dshide-rename' }, m.ws) : null, m.snippet ? el('span', { className: 'dshide-time' }, m.snippet) : null))
-    if (body.length === 0) body = el('div', { className: 'dshide-empty' }, '未找到匹配的会话。')
+    content.forEach((c) => {
+      const ci = c as { sessionId?: string; snippet?: string }
+      if (!ci.sessionId || seenIds[ci.sessionId]) return
+      const s = byId[ci.sessionId]
+      if (s) merged.push({ id: ci.sessionId, title: s.displayTitle ?? ci.sessionId, ws: label(s), ...(ci.snippet ? { snippet: ci.snippet } : {}) })
+    })
+    const rows = merged.slice(0, 20).map((m) => el('div', { key: m.id, className: 'dshide-row', onClick: () => { open(m.id) } }, el('span', { className: 'dshide-dot' }), el('span', { className: 'dshide-name' }, m.title), m.ws ? el('span', { className: 'dshide-rename' }, m.ws) : null, m.snippet ? el('span', { className: 'dshide-time' }, m.snippet) : null))
+    body = rows.length === 0 ? el('div', { className: 'dshide-empty' }, '未找到匹配的会话。') : rows
   } else if (view === 'flat') {
     const flat = ids.map((id) => byId[id]).filter(visible).sort((a: SessionLike, b: SessionLike) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
     body = flat.length === 0 ? el('div', { className: 'dshide-empty' }, '暂无会话。') : flat.map((s) => sessionRow(s, false))
