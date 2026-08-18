@@ -21,6 +21,7 @@ import type {
 } from './types.ts'
 // Type-only: resolve the injected Host service augmentations
 // (ctx.fs / ctx.subprocess / ctx.workspaceRegistry / ctx.sandboxPolicy).
+import type { FsDirEntry, FsTarget } from '@deepseek-ai/dsh-fs'
 import type {} from '@deepseek-ai/dsh-fs'
 import type {} from '@deepseek-ai/dsh-subprocess'
 import type {} from '@deepseek-ai/dsh-workspace'
@@ -100,7 +101,7 @@ export class IdeService extends TypertRemoteService {
     if (registry !== undefined) {
       try {
         for (const w of registry.list()) {
-          workspaces.push({ id: this.str(w.workspaceId), title: this.str(w.title), path: this.str(w.path) })
+          workspaces.push({ id: this.str(w.id), title: this.str(w.title), path: this.str(w.path) })
         }
       } catch { /* registry listing is best-effort */ }
     }
@@ -115,12 +116,14 @@ export class IdeService extends TypertRemoteService {
     if (fs === undefined) throw new Error('filesystem service unavailable')
     const target = await fs.resolve(path)
     const entries = await fs.listDir(target)
-    const rows = entries.map((e) => ({
-      name: e.name,
-      type: e.type,
-      path: this.str(e.target && e.target.displayPath),
-      size: typeof e.size === 'number' ? e.size : null,
-    }))
+    const rows = entries
+      .filter((e): e is FsDirEntry & { type: 'directory' | 'file' } => e.type === 'directory' || e.type === 'file')
+      .map((e) => ({
+        name: e.name,
+        type: e.type,
+        path: this.str(e.target && e.target.displayPath),
+        size: typeof e.size === 'number' ? e.size : null,
+      }))
     rows.sort((a, b) => {
       const ad = a.type === 'directory' ? 0 : 1
       const bd = b.type === 'directory' ? 0 : 1
@@ -207,8 +210,8 @@ export class IdeService extends TypertRemoteService {
       if (rec == null || rec === '' || rec.length < 4) continue
       const xy = rec.slice(0, 2)
       const path = rec.slice(3)
-      const staged = xy[0] === ' ' ? '' : xy[0]
-      const unstaged = xy[1] === ' ' ? '' : xy[1]
+      const staged = xy[0] === ' ' ? '' : (xy[0] ?? '')
+      const unstaged = xy[1] === ' ' ? '' : (xy[1] ?? '')
       if (xy[0] === 'R' || xy[0] === 'C') {
         const from = i < parts.length ? (parts[i] ?? '') : ''
         if (i < parts.length) i++
@@ -316,9 +319,9 @@ export class IdeService extends TypertRemoteService {
     const MAX_MATCHES = 200
     const SKIP = new Set(['.git', 'node_modules', 'dist', 'build', 'out', 'target', 'coverage', '.next', '.dsh', '.agent-presets', '__pycache__', '.venv', 'venv', '.idea', '.vscode'])
 
-    const walk = async (target: unknown): Promise<void> => {
+    const walk = async (target: FsTarget): Promise<void> => {
       if (truncated || files >= MAX_FILES || matches.length >= MAX_MATCHES) return
-      let entries: Array<{ name: string; type: string; target: unknown; size: number | null; displayPath?: string }>
+      let entries: FsDirEntry[]
       try { entries = await fs.listDir(target) } catch { return }
       for (const e of entries) {
         if (truncated || files >= MAX_FILES || matches.length >= MAX_MATCHES) return
@@ -335,9 +338,10 @@ export class IdeService extends TypertRemoteService {
           const lines = text.split(/\r?\n/)
           for (let li = 0; li < lines.length; li++) {
             const line = lines[li]
+            if (line === undefined) continue
             const hay = caseSensitive ? line : line.toLowerCase()
             if (hay.indexOf(q) !== -1) {
-              matches.push({ path: this.str(e.displayPath), line: li + 1, text: line.length > 240 ? line.slice(0, 240) : line })
+              matches.push({ path: this.str(e.target.displayPath), line: li + 1, text: line.length > 240 ? line.slice(0, 240) : line })
               if (matches.length >= MAX_MATCHES) { truncated = true; break }
             }
           }

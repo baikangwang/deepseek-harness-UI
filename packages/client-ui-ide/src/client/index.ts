@@ -10,10 +10,11 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { createElement, useEffect, useState } from 'react'
 import ideRemote from '@deepseek-ai/dsh-ide/remote'
-import type { IdeRemoteFace, RemoteResult } from '../types.ts'
-// Type-only: resolve the injected client service augmentations (ctx.remote / ctx.slots).
-import type {} from '@deepseek-ai/dsh-api-remotes'
-import type {} from '@deepseek-ai/dsh-client-ui-slots'
+import type { IdeRemoteFace, RemoteResult } from '@deepseek-ai/dsh-ide/types'
+// Type-only: resolve the injected client service augmentations
+// (ctx.remote from api-remotes, ctx.slots from the client runtime).
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type {} from '@deepseek-ai/dsh-client-runtime/client'
 
 export const inject = ['slots', 'remote']
 
@@ -40,8 +41,14 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => () => { void disposeRemote() })
 
   const ide = (ctx.remote as unknown as { ide: IdeRemoteFace }).ide
-  const slots = ctx.get('slots')
-  if (slots === undefined) return
+  // Loosely-typed slot registry: this port keeps the dynamic-plugin shape
+  // (register into `sidebar.workspaces` + `editor`/`conversation.view` by name);
+  // a DSH-idiomatic rewrite would type these against SlotMap and thread the
+  // remote face through a `register` inject factory instead of a closure.
+  const slots = ctx.slots as unknown as {
+    inject(key: string, callback: () => unknown): void
+    register(options: Record<string, unknown>, component: unknown): () => void
+  }
   const layout = ctx.get('layout') as { openEditor?: () => void } | undefined
   const hasEditorColumn = layout !== undefined && typeof layout.openEditor === 'function'
   const el = createElement

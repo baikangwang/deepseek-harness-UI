@@ -1,11 +1,33 @@
 {
-  "files": [],
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
   "references": [
     {
-      "path": "./tsconfig.host.json"
+      "path": "../../../vendor/cordis"
     },
     {
-      "path": "./tsconfig.client.json"
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../fs/fs"
+    },
+    {
+      "path": "../../subprocess/subprocess"
+    },
+    {
+      "path": "../../workspace/workspace"
+    },
+    {
+      "path": "../../sandbox/sandbox-policy"
+    },
+    {
+      "path": "../../runtime-diagnostics/invariants"
     }
   ]
 }

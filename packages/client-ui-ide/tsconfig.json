@@ -2,16 +2,17 @@
   "extends": "../../../tsconfig.base.client.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "lib/types",
-    "tsBuildInfoFile": "lib/tsconfig.client.tsbuildinfo"
+    "outDir": "lib/types"
   },
-  "files": [
-    "src/client/index.ts",
-    "src/types.ts"
+  "include": [
+    "src"
   ],
   "references": [
     {
       "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../runtime-diagnostics/invariants"
     },
     {
       "path": "../../typert/protocol"
@@ -20,7 +21,10 @@
       "path": "../../api/remotes/tsconfig.client.json"
     },
     {
-      "path": "../../client/ui-slots"
+      "path": "../runtime"
+    },
+    {
+      "path": "../../host/ide"
     }
   ]
 }

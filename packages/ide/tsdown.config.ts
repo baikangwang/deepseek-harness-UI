@@ -1,14 +1,30 @@
-import { clientBundle } from '../../client/tsdown.client.ts'
+import { defineConfig } from 'tsdown'
 
 /**
- * Dual-face package: the Host pass bundles the `ide` Remote service node half
- * (and the root Typert plugin emits `typert.host.js` + `typert.remote-client.js`
- * from the `@Remote` decorators), while the Client pass emits the browser
- * bundle only. `hostPhase: true` keeps the node half in the Host pass so the
- * client bundle never rebuilds it.
+ * Host-only package: bundle the `IdeService` node half and its invariant
+ * companion. The root Typert plugin emits `typert.host.js` +
+ * `typert.remote-client.js` from the `@Remote` decorators during the Host
+ * build pass (this package's `./typert` / `./remote` exports select it).
  */
-export default clientBundle(
-  '@deepseek-ai/dsh-ide',
-  ['lib/types/index.js'],
-  { hostPhase: true },
-)
+export default defineConfig([
+  {
+    entry: ['lib/types/index.js'],
+    outDir: 'lib',
+    format: ['esm'],
+    platform: 'node',
+    target: 'es2024',
+    fixedExtension: false,
+    dts: false,
+    clean: false,
+  },
+  {
+    entry: ['lib/types/invariant.js'],
+    outDir: 'lib',
+    format: ['esm'],
+    platform: 'node',
+    target: 'es2024',
+    fixedExtension: false,
+    dts: false,
+    clean: false,
+  },
+])

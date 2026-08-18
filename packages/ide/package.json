@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-ide",
-  "description": "deepseek-harness-UI: VSCode-style Explorer / Search / Source Control / Sessions sidebar and editor column for the DeepSeek Harness Web UI.",
+  "description": "deepseek-harness-UI host half: the `ide` Remote namespace (filesystem / git / search primitives) for the DeepSeek Harness Web UI.",
   "version": "0.1.0",
   "publishConfig": {
     "access": "public"
@@ -18,13 +18,13 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
     "./types": {
       "types": "./lib/types/types.d.ts",
       "default": "./lib/types/types.js"
-    },
-    "./client": {
-      "types": "./lib/types/client/index.d.ts",
-      "default": "./lib/client.js"
     },
     "./typert": {
       "types": "./lib/typert.host.d.ts",
@@ -37,22 +37,9 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
-    "client": {
-      "platform": "web",
-      "inject": [
-        "@deepseek-ai/dsh-api-gateway",
-        "@deepseek-ai/dsh-client-ui-slots"
-      ]
-    }
-  },
-  "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch"
-  },
   "files": [
     "lib/index.js",
-    "lib/client.js",
+    "lib/invariant.js",
     "lib/types/**/*.js",
     "lib/types/**/*.d.ts",
     "lib/typert.host.js",
@@ -66,22 +53,16 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-api-gateway": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
-    "react": "^18.2.0"
+    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "@deepseek-ai/dsh-typert-protocol": "workspace:^"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-api-gateway": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
     "@deepseek-ai/dsh-fs": "workspace:^",
+    "@deepseek-ai/dsh-invariants": "workspace:^",
     "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
     "@deepseek-ai/dsh-subprocess": "workspace:^",
     "@deepseek-ai/dsh-typert-protocol": "workspace:^",
-    "@deepseek-ai/dsh-workspace": "workspace:^",
-    "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "@deepseek-ai/dsh-workspace": "workspace:^"
   }
 }
