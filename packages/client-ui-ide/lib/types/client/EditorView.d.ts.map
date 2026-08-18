@@ -1,0 +1,1 @@
+{"version":3,"file":"EditorView.d.ts","sourceRoot":"","sources":["../../../src/client/EditorView.tsx"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,OAAO,EAAE,aAAa,EAAuB,MAAM,OAAO,CAAA;AAC1D,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,YAAY,CAAA;AAwC7C,MAAM,WAAW,eAAgB,SAAQ,WAAW;CAAG;AAEvD,wBAAgB,UAAU,CAAC,KAAK,EAAE,eAAe,GAAG,UAAU,CAAC,OAAO,aAAa,CAAC,CASnF"}
