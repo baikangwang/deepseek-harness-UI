@@ -15,6 +15,6 @@ Independent: this package adds no model-request tokens, so it cannot invalidate 
 
 ## Known Limitations and Deferred Work
 
-- **JSX / 样式封装** — 组件用 `createElement`（非 JSX）书写；样式在 `styles.module.css` 中全部以 `:global()` 包裹（类名保持字面量），未做 scoped 哈希。DSH 惯用法是 JSX + 语义 token 的 scoped CSS Modules。
-- **注册边界 `as any`** — `ctx.slots.register` 的组件参数在注册点做了 `as any` 转换（组合 props 含 owner + framework shares）；组件内部 props 已按 `IdeSidebarProps` / `EditorViewProps` 强类型。完整 SlotMap 强类型注册是后续项。
-- **编辑器列依赖 #6 四列补丁** — `ctx.layout.openEditor` 缺失时自动回退到 `conversation.view`，无独立列。
+- **JSX / 样式封装** — 组件用 `createElement`（非 JSX）书写；样式在 `styles.module.css` 中全部以 `:global()` 包裹（类名保持字面量）。DSH 惯用法是 JSX + 语义 token 的 scoped CSS Modules——正规化清单见 `docs/refactor-plan-v4.md` §4。
+- **注册边界 `as any`** — `ctx.slots.register` 的组件参数在注册点做了 `as any` 转换（组合 props 含 owner + framework shares）；组件内部 props 已按 `IdeSidebarProps` / `EditorViewProps` 强类型。
+- **编辑器是 `conversation.view` 标签页** — 官方槽，可分发；与对话为时序切换（看编辑器时看不到聊天）。独立并排列需要壳扩展（改官方 ui-layout），不属于插件能力（`docs/refactor-plan-v4.md` §1）。

@@ -25,10 +25,8 @@ export interface IdeInjected {
   rpc: <T>(p: Promise<RemoteResult<T>>) => Promise<T>
   /** Editor-tab store handle (shared with the editor column registration). */
   store: IdeStore
-  /** Open a file/diff tab in the editor column (falls back to the conversation editor view). */
+  /** Open a file/diff tab in the editor view (a `conversation.view` tab). */
   openDoc: (tab: IdeTab) => void
-  /** Present when the layout shell owns an editor column (ui-layout #6); undefined otherwise. */
-  openEditor: (() => void) | undefined
   sessions: {
     open: (id: string) => void
     search: (query: string, signal: AbortSignal) => Promise<{ items: unknown[]; hasMore: boolean }>

@@ -1,10 +1,8 @@
 /**
  * deepseek-harness-UI client half, apply: mount the `ide` Remote, create the
- * shared editor store, and register the two surfaces (`sidebar.workspaces`
- * plus `editor`, or the `conversation.view` fallback). Registration goes
- * through `ctx.slots.inject` (waits on the owner declaration, follows HMR
- * lifetimes); business data rides the register `inject` factory — never a
- * wider ctx reach in components.
+ * shared editor store, and register the surfaces. The editor is a
+ * `conversation.view` tab (official slot, distributable); there is NO shell
+ * dependency — the plugin composes only through declared slots.
  * @module @deepseek-ai/dsh-client-ui-ide/client
  */
 
@@ -15,7 +13,7 @@ import type { IdeRemoteFace } from '@deepseek-ai/dsh-ide/types'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pull the SlotMap merges we register into (sidebar.workspaces,
-// editor, conversation.view) through the contract module.
+// conversation.view) through the contract module.
 import type {} from './slots.ts'
 import type { IdeInjected } from './slots.ts'
 import { createIdeStore } from './stores.ts'
@@ -26,7 +24,7 @@ import { EditorView } from './EditorView.tsx'
 /** Required services (cordis fiber inject). */
 export const inject = ['slots', 'remote', 'sessions', 'workspaces']
 
-/** Fallback conversation-view activation: click the 编辑器/Chat tab by label. */
+/** Activate the conversation editor view: click the 编辑器 tab by label. */
 function clickTabNow(labels: string[]): boolean {
   try {
     const tabs = document.querySelectorAll('[role="tab"]')
@@ -48,19 +46,14 @@ export async function apply(ctx: Context): Promise<void> {
 
   const ide = (ctx.remote as unknown as { ide: IdeRemoteFace }).ide
   const store = createIdeStore()
-  // The `layout` service is optional: present exactly when ui-layout owns an
-  // editor column (#6); without it the editor falls back to conversation.view.
-  const layout = ctx.get('layout') as { openEditor?: () => void } | undefined
-  const hasEditorColumn = layout !== undefined && typeof layout.openEditor === 'function'
 
   const injected: IdeInjected = {
     ide,
     rpc,
     store,
-    openEditor: layout?.openEditor,
+    openEditor: undefined,
     openDoc: (tab) => {
       store.add(tab)
-      if (hasEditorColumn) { layout?.openEditor?.(); return }
       clickTabNow(['编辑器', 'Editor'])
     },
     sessions: {
@@ -94,20 +87,8 @@ export async function apply(ctx: Context): Promise<void> {
     IdeSidebar as any,
   ))
 
-  if (hasEditorColumn) {
-    // The `editor` slot is a local ui-layout capability (#6 four-column patch),
-    // absent from the official SlotMap — cast keeps this compiling on clean
-    // official DSH. The runtime probe above decides whether it is registered.
-    // Once the four-column layout lands upstream (refactor-plan-v2.md §2.2),
-    // this can become a typed registration.
-    ctx.slots.inject('editor' as never, () => (ctx.slots.register as never)(
-      { name: 'editor', inject: () => injected },
-      EditorView,
-    ))
-  } else {
-    ctx.slots.inject('conversation.view', () => ctx.slots.register(
-      { name: 'conversation.view', id: 'editor', order: 20, label: '编辑器', inject: () => injected },
-      EditorView as any,
-    ))
-  }
+  ctx.slots.inject('conversation.view', () => ctx.slots.register(
+    { name: 'conversation.view', id: 'editor', order: 20, label: '编辑器', inject: () => injected },
+    EditorView as any,
+  ))
 }

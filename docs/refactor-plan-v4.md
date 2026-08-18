@@ -43,10 +43,10 @@
 | 注册类型 | 边界 `as any` | `conversation.view` / `sidebar.workspaces` 用官方 SlotMap 强类型；`editor`（方案 Y）在官方编译下必须 cast——这是硬边界，不是妥协 |
 | 导出 | 仅 apply/inject | 不变（已合规） |
 
-## 5. 决策点（需拍板）
+## 5. 决策点（已拍板）
 
-1. **编辑器承载面**：X（标签页，可分发）/ Y（标签页 + 本地独立列壳扩展）/ Z（放弃，不选）。
-2. 定了之后：按 4 的正规化清单把插件做到位（JSX / scoped CSS / 强类型注册），发布锁 rc tag。
+1. **编辑器承载面 = X**（`conversation.view` 标签页，可分发）。依据：用户确认当前运行 UI 即「内容切换」行为（编辑器与对话不可同时可见），与 X 一致；独立列（#6 源码四列并排）在运行中并未生效，且需壳扩展不可分发。✅ 已定，客户端已简化（去掉 `ctx.layout.openEditor` / `editor` 槽依赖，编辑器恒为 `conversation.view` 标签页）。
+2. 按 4 的正规化清单把插件做到位（JSX / scoped CSS / 强类型注册），发布锁 rc tag。
 
 ## 6. 验收
 
