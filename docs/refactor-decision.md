@@ -8,8 +8,8 @@
 
 | 项目 | 角色 | 对照契约 |
 |---|---|---|
-| `deepseek-harness`（本地克隆） | 上游补丁依赖者 + 开发环境 | 本地 HEAD = `origin/master` = rc.7（`99f6f02fec`）。工作树含**未提交的官方包修改**（见下），以及新包 `packages/host/ide` |
-| `deepseek-harness-UI` | 插件作者 | `packages/ide` = `@deepseek-ai/dsh-ide` 双面插件，符合插件契约 |
+| `deepseek-harness`（本地克隆） | 上游补丁依赖者 + 开发环境 | 本地 HEAD = `origin/master` = rc.7（`99f6f02fec`）。工作树应保持干净（残留构建产物已清理） |
+| `ide-ui`（deepseek-harness-UI） | 插件作者 | `packages/ide` = `dsh-ide-ui`、`packages/client-ui-ide` = `dsh-client-ide-ui` 双面插件，无 scope 第三方命名，符合插件契约 |
 | `deepseek-harness-desktop` | 部署者（纯消费方） | 未调研，推荐仅锁版本 + 挂载 + 桌面壳 |
 
 ### 1.1 关键矛盾
@@ -24,9 +24,9 @@
 
 ### 1.2 官方契约事实（已核实）
 
-1. **挂载契约**：插件以 npm 包 + profile patch 挂载——目标 profile 的 `cordis.patch.yml` 追加 `- insert: { id: deepseek-harness-ui, name: '@deepseek-ai/dsh-ide' }`。
+1. **挂载契约**：插件以 npm 包 + profile patch 挂载——目标 profile 的 `cordis.patch.yml` 追加 `- insert: { id: ide-ui, name: 'dsh-ide-ui' }`。
 2. **客户端插件三注册面**（`packages/client/AGENTS.md`）：`tsconfig.client.json` 聚合 reference、`dsh.client` manifest 行（web-app `cordis.patch.yml`）、web-app `package.json` 依赖。
-3. **客户端 bundle 纯度门禁**：`packages/client/tsdown.client.ts` 的 `GENERATED_REMOTE = /^@deepseek-ai\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/`——**Typert `@Remote` 生成的 client 贡献只放行 `@deepseek-ai/dsh-*` 命名空间**。`@deepseek-ai/dsh-ide` 是合规命名。
+3. **客户端 bundle 纯度门禁**：`packages/client/tsdown.client.ts` 的 `GENERATED_REMOTE = /^@deepseek-ai\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/`——**该门禁只约束编进官方 client bundle 的包**。自包含构建（P6）下插件用自己的 tsdown 打包 client，不再经过该门禁；因此命名无需占用官方 scope（详见决策 2）。
 4. **rc 阶段无兼容承诺**（根 `AGENTS.md`）：发布前可自由改名/重构，不保证向后兼容。**依赖必须精确锁定到 tag（`dsh-v0.1.0-rc.N`），不能用宽松 semver 范围**。
 5. **发布节奏**：`release/dsh-0.1.0-rc.N` 分支 → PR 合并 → tag（`dsh-v0.1.0-rc.7`）→ npm 发布（`@deepseek-ai/dsh@0.1.0-rc.7`，dist-tags `latest`/`next`）。
 6. **许可证**：MIT（2026 DeepSeek）。
@@ -70,9 +70,9 @@ deepseek-harness-desktop  ← 锁定 @deepseek-ai/dsh@rc.N + 插件版本，纯�
 
 ### 决策 2：插件命名空间
 
-- **2A 保持 `@deepseek-ai/dsh-ide`（当前唯一合规路径）**：纯度门禁只放行该命名空间。
-- **2B 推动上游放宽 `GENERATED_REMOTE` 到任意 scope**，再迁移自有命名空间（需要上游 PR，低优先级）。
-- **2C 弃用 Typert `@Remote`，改用 apiproxy/普通 JSON-RPC**：摆脱命名约束，但失去生成式 remote-client（`@deepseek-ai/dsh-ide/remote` 的产物与纯度门禁豁免）。
+- **2A（已定案，v2 整改）无 scope 包名 `dsh-ide-ui` / `dsh-client-ide-ui` / `dsh-ide-ui-bundle`**：早期"纯度门禁只放行 `@deepseek-ai/dsh-*`"的结论只在把 client 代码编进官方 bundle（X 方案实证的旧路线）时成立；P6 自包含构建后官方门禁不再约束，且第三方无法向官方 `@deepseek-ai` scope 发布（讨论区 2004 亦要求显著标注非官方、禁止蹭 DSH 名称）。故采用官方第三方教程同款无 scope 命名（`publish.md` 的 `dsh-hello-plugin` 先例）。
+- 2B 推动上游放宽 `GENERATED_REMOTE` 到任意 scope（需要上游 PR，低优先级，已无必要）。
+- 2C 弃用 Typert `@Remote`，改用 apiproxy/普通 JSON-RPC：摆脱命名约束，但失去生成式 remote-client 产物，已否决。
 
 ### 决策 3：deepseek-harness-UI 仓库形态
 

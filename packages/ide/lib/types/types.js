@@ -1,5 +1,5 @@
 /**
- * deepseek-harness-UI — `ide` Remote namespace payload types.
+ * ide-ui — `ide` Remote namespace payload types.
  *
  * These are the wire shapes the Host {@link IdeService} returns and the
  * browser client consumes through `ctx.remote.ide`. Plain JSON-safe types

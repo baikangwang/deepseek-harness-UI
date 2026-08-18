@@ -1,8 +1,8 @@
-# deepseek-harness-UI 组合层：插入 ide 插件行。
-# 行 id 固定（deepseek-harness-ui / deepseek-harness-ui-client），
-# 后应用的层可按 id 覆盖；成员可在 profile 自己的 cordis.patch.yml 覆盖。
+# ide-ui 组合层：插入插件行。
+# 行 id 固定（ide-ui / ui-ide），后应用的层可按 id 覆盖；成员可在 profile 自己的 cordis.patch.yml 覆盖。
+# 命名遵循官方惯例：host 行短语义 id，client UI 行 ui-* 前缀（对齐 ui-sidebar / ui-tool）。
 - insert:
-    - id: deepseek-harness-ui
-      name: '@deepseek-ai/dsh-ide'
-    - id: deepseek-harness-ui-client
-      name: '@deepseek-ai/dsh-client-ui-ide'
+    - id: ide-ui
+      name: 'dsh-ide-ui'
+    - id: ui-ide
+      name: 'dsh-client-ide-ui'

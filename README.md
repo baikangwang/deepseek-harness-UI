@@ -1,8 +1,10 @@
-# deepseek-harness-UI
+# ide-ui
+
+> 非官方社区插件，由社区成员独立开发和维护（Unofficial project, independently developed and maintained by community members）。
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 Web UI 增加一个 **VSCode 风格的统一左栏**：在保留「左边栏 + 中心对话 + 右侧详情」三栏骨架的前提下，把左侧栏内部重排为「logo + 活动栏 + 内容区」，把文件浏览、源码管理、全文搜索与会话管理收敛到一个侧栏里。
 
-> 实现以 **动态 Cordis 插件** 交付（`vside-1`），源码沉淀在 [`packages/ide/`](packages/ide/)，架构说明见 [`docs/architecture.md`](docs/architecture.md)。
+> 交付为可分发 npm 包（Host [`dsh-ide-ui`](packages/ide/) + Client [`dsh-client-ide-ui`](packages/client-ui-ide/) + 组合层 [`dsh-ide-ui-bundle`](packages/bundle/)），源码与架构说明见 [`docs/`](docs/)。
 
 ## 特性
 
@@ -35,25 +37,41 @@
 ## 目录结构
 
 ```
-deepseek-harness-UI/
+ide-ui/
 ├── README.md                 # 本文件
 ├── docs/
 │   └── architecture.md       # 系统设计：分层、槽位策略、RPC 契约、数据流、阶段计划
 └── packages/
-    └── ide/                  # DSH Code 扩展源码
-        ├── host.js           # Host 能力层：fs / git / 搜索
-        ├── client.js         # Client 展示层：活动栏 + 四个视图
-        ├── package.json      # 未来 @deepseek-ai/dsh-ide 包清单（蓝图）
-        └── README.md         # 使用方式 + RPC 契约
+    ├── ide/                  # Host 半：dsh-ide-ui（`ide` Remote：fs / git / 搜索）
+    ├── client-ui-ide/        # Client 半：dsh-client-ide-ui（活动栏 + 四视图 + 编辑器标签页）
+    └── bundle/               # 组合层：dsh-ide-ui-bundle（cordis.patch.yml 一键挂载）
 ```
 
-## 快速开始
+## 安装
 
-当前以动态插件形式运行，不依赖仓库构建：
+以 bundle 方式挂载到任意 profile（三个包分别发布）：
 
-1. 在 Harness Web 会话中通过 `cordis_define` 加载 `packages/ide/host.js` 与 `packages/ide/client.js` 的插件体；
-2. `cordis_run` 激活（首次需在界面批准 Client 包）；
-3. 左侧栏即出现统一活动栏。
+```sh
+dsh plugin --profile <name> add dsh-ide-ui-bundle
+```
+
+或手动在 profile 的 `cordis.patch.yml` 追加：
+
+```yaml
+- insert:
+    - id: ide-ui
+      name: 'dsh-ide-ui'
+    - id: ui-ide
+      name: 'dsh-client-ide-ui'
+```
+
+## 开发
+
+```sh
+pnpm install
+pnpm build          # 三个包各自产出 lib/
+pnpm typecheck
+```
 
 ## License
 

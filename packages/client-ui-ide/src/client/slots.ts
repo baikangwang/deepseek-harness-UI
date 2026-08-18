@@ -5,10 +5,10 @@
  * themselves are declared by the owner packages (ui-sidebar, ui-layout,
  * ui-conversation); this module only pulls them into scope and types the
  * registrant's own share.
- * @module @deepseek-ai/dsh-client-ui-ide/client/slots
+ * @module dsh-client-ide-ui/client/slots
  */
 
-import type { IdeRemoteFace, RemoteResult } from '@deepseek-ai/dsh-ide/types'
+import type { IdeRemoteFace, RemoteResult } from 'dsh-ide-ui/types'
 // Type-only: resolve the SlotMap merges we register into. The `editor` slot is
 // deliberately NOT pulled in — it only exists on the local #6 ui-layout patch,
 // and the `editor` registration in apply uses a runtime-probe cast so this

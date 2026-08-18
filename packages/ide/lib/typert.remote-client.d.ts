@@ -3,7 +3,7 @@ import type {
   RemoteResult,
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
-import type { GitDiffResult, GitStatusResult, ListDirResult, ReadTextResult, RootsResult, SearchResult } from '@deepseek-ai/dsh-ide/types'
+import type { GitDiffResult, GitStatusResult, ListDirResult, ReadTextResult, RootsResult, SearchResult } from 'dsh-ide-ui/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$696465 {

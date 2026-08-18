@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-ide",
-  "description": "deepseek-harness-UI host half: the `ide` Remote namespace (filesystem / git / search primitives) for the DeepSeek Harness Web UI.",
-  "version": "0.1.0",
+  "name": "dsh-ide-ui",
+  "description": "ide-ui host half: the `ide` Remote namespace (filesystem / git / search primitives) for the DeepSeek Harness Web UI. Unofficial community plugin.",
+  "version": "0.1.0-rc.7",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baikangwang/deepseek-harness-UI.git",
+    "url": "git+https://github.com/baikangwang/dsh-ide-ui.git",
     "directory": "packages/ide"
   },
   "type": "module",

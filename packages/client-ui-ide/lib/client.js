@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-	id: "@deepseek-ai/dsh-client-ui-ide",
+	id: "dsh-client-ide-ui",
 	factory: (require) => {
 		var module = { exports: {} };
 		var exports = module.exports;
@@ -4092,58 +4092,58 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		}
 		//#endregion
 		//#region ../ide/lib/typert.remote-client.js
-		const _deepseek_ai_dsh_ide_ide_delete_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_delete_result$schema = object({
+		const _dsh_ide_ui_ide_delete_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_delete_result$schema = object({
 			"ok": boolean(),
 			"stderr": string(),
 			"path": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_explore_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_explore_parameter_1$schema = union([
+		const _dsh_ide_ui_ide_explore_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_explore_parameter_1$schema = union([
 			_undefined(),
 			literal(false),
 			literal(true)
 		]);
-		const _deepseek_ai_dsh_ide_ide_explore_result$schema = object({
+		const _dsh_ide_ui_ide_explore_result$schema = object({
 			"ok": boolean(),
 			"path": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitCommit_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitCommit_parameter_1$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitCommit_result$schema = object({
+		const _dsh_ide_ui_ide_gitCommit_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitCommit_parameter_1$schema = string();
+		const _dsh_ide_ui_ide_gitCommit_result$schema = object({
 			"ok": boolean(),
 			"stdout": string(),
 			"stderr": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitDiff_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitDiff_parameter_1$schema = union([_undefined(), string()]);
-		const _deepseek_ai_dsh_ide_ide_gitDiff_result$schema = object({
+		const _dsh_ide_ui_ide_gitDiff_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitDiff_parameter_1$schema = union([_undefined(), string()]);
+		const _dsh_ide_ui_ide_gitDiff_result$schema = object({
 			"stdout": string(),
 			"ok": boolean(),
 			"stderr": string(),
 			"path": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitDiscard_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitDiscard_parameter_1$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitDiscard_parameter_2$schema = boolean();
-		const _deepseek_ai_dsh_ide_ide_gitDiscard_result$schema = object({
+		const _dsh_ide_ui_ide_gitDiscard_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitDiscard_parameter_1$schema = string();
+		const _dsh_ide_ui_ide_gitDiscard_parameter_2$schema = boolean();
+		const _dsh_ide_ui_ide_gitDiscard_result$schema = object({
 			"ok": boolean(),
 			"stderr": string(),
 			"path": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitStage_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitStage_parameter_1$schema = array(string());
-		const _deepseek_ai_dsh_ide_ide_gitStage_result$schema = object({
+		const _dsh_ide_ui_ide_gitStage_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitStage_parameter_1$schema = array(string());
+		const _dsh_ide_ui_ide_gitStage_result$schema = object({
 			"ok": boolean(),
 			"stderr": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitStageAll_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitStageAll_result$schema = object({
+		const _dsh_ide_ui_ide_gitStageAll_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitStageAll_result$schema = object({
 			"ok": boolean(),
 			"stderr": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitStatus_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitStatus_result$schema = object({
+		const _dsh_ide_ui_ide_gitStatus_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitStatus_result$schema = object({
 			"branch": string(),
 			"changes": array(object({
 				"xy": string(),
@@ -4155,19 +4155,19 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			"notRepo": boolean(),
 			"error": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitUnstage_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitUnstage_parameter_1$schema = array(string());
-		const _deepseek_ai_dsh_ide_ide_gitUnstage_result$schema = object({
+		const _dsh_ide_ui_ide_gitUnstage_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitUnstage_parameter_1$schema = array(string());
+		const _dsh_ide_ui_ide_gitUnstage_result$schema = object({
 			"ok": boolean(),
 			"stderr": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_gitUnstageAll_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_gitUnstageAll_result$schema = object({
+		const _dsh_ide_ui_ide_gitUnstageAll_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_gitUnstageAll_result$schema = object({
 			"ok": boolean(),
 			"stderr": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_listDir_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_listDir_result$schema = object({
+		const _dsh_ide_ui_ide_listDir_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_listDir_result$schema = object({
 			"path": string(),
 			"entries": array(object({
 				"name": string(),
@@ -4176,39 +4176,39 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				"size": union([literal(null), number()])
 			}))
 		});
-		const _deepseek_ai_dsh_ide_ide_mkdir_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_mkdir_result$schema = object({
+		const _dsh_ide_ui_ide_mkdir_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_mkdir_result$schema = object({
 			"ok": boolean(),
 			"stderr": string(),
 			"path": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_newFile_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_newFile_result$schema = object({
+		const _dsh_ide_ui_ide_newFile_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_newFile_result$schema = object({
 			"ok": literal(true),
 			"path": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_paste_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_paste_result$schema = object({
+		const _dsh_ide_ui_ide_paste_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_paste_result$schema = object({
 			"ok": boolean(),
 			"files": array(string()),
 			"stderr": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_readText_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_readText_result$schema = object({
+		const _dsh_ide_ui_ide_readText_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_readText_result$schema = object({
 			"path": string(),
 			"content": string(),
 			"truncated": boolean(),
 			"size": number()
 		});
-		const _deepseek_ai_dsh_ide_ide_rename_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_rename_parameter_1$schema = string();
-		const _deepseek_ai_dsh_ide_ide_rename_result$schema = object({
+		const _dsh_ide_ui_ide_rename_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_rename_parameter_1$schema = string();
+		const _dsh_ide_ui_ide_rename_result$schema = object({
 			"ok": boolean(),
 			"stderr": string(),
 			"from": string(),
 			"to": string()
 		});
-		const _deepseek_ai_dsh_ide_ide_roots_result$schema = object({
+		const _dsh_ide_ui_ide_roots_result$schema = object({
 			"root": string(),
 			"workspaces": array(object({
 				"id": string(),
@@ -4216,10 +4216,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				"path": string()
 			}))
 		});
-		const _deepseek_ai_dsh_ide_ide_search_parameter_0$schema = string();
-		const _deepseek_ai_dsh_ide_ide_search_parameter_1$schema = string();
-		const _deepseek_ai_dsh_ide_ide_search_parameter_2$schema = boolean();
-		const _deepseek_ai_dsh_ide_ide_search_result$schema = object({
+		const _dsh_ide_ui_ide_search_parameter_0$schema = string();
+		const _dsh_ide_ui_ide_search_parameter_1$schema = string();
+		const _dsh_ide_ui_ide_search_parameter_2$schema = boolean();
+		const _dsh_ide_ui_ide_search_result$schema = object({
 			"error": string(),
 			"matches": array(object({
 				"path": string(),
@@ -4230,10 +4230,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			"truncated": boolean()
 		});
 		const TYPERT_REMOTE = {
-			package: "@deepseek-ai/dsh-ide",
+			package: "dsh-ide-ui",
 			descriptors: [
 				{
-					id: "@deepseek-ai/dsh-ide#ide/delete",
+					id: "dsh-ide-ui#ide/delete",
 					service: "ide",
 					namespace: "ide",
 					method: "delete",
@@ -4244,14 +4244,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/delete:path",
-							schema: _deepseek_ai_dsh_ide_ide_delete_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/delete:path",
+							schema: _dsh_ide_ui_ide_delete_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/delete:result",
-						schema: _deepseek_ai_dsh_ide_ide_delete_result$schema
+						typeSymbol: "dsh-ide-ui#ide/delete:result",
+						schema: _dsh_ide_ui_ide_delete_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4260,7 +4260,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/explore",
+					id: "dsh-ide-ui#ide/explore",
 					service: "ide",
 					namespace: "ide",
 					method: "explore",
@@ -4271,8 +4271,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/explore:path",
-							schema: _deepseek_ai_dsh_ide_ide_explore_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/explore:path",
+							schema: _dsh_ide_ui_ide_explore_parameter_0$schema
 						}
 					}, {
 						name: "select",
@@ -4281,14 +4281,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						acceptsUndefined: true,
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/explore:select",
-							schema: _deepseek_ai_dsh_ide_ide_explore_parameter_1$schema
+							typeSymbol: "dsh-ide-ui#ide/explore:select",
+							schema: _dsh_ide_ui_ide_explore_parameter_1$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/explore:result",
-						schema: _deepseek_ai_dsh_ide_ide_explore_result$schema
+						typeSymbol: "dsh-ide-ui#ide/explore:result",
+						schema: _dsh_ide_ui_ide_explore_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4297,7 +4297,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitCommit",
+					id: "dsh-ide-ui#ide/gitCommit",
 					service: "ide",
 					namespace: "ide",
 					method: "gitCommit",
@@ -4308,8 +4308,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitCommit:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitCommit_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitCommit:cwd",
+							schema: _dsh_ide_ui_ide_gitCommit_parameter_0$schema
 						}
 					}, {
 						name: "message",
@@ -4317,14 +4317,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitCommit:message",
-							schema: _deepseek_ai_dsh_ide_ide_gitCommit_parameter_1$schema
+							typeSymbol: "dsh-ide-ui#ide/gitCommit:message",
+							schema: _dsh_ide_ui_ide_gitCommit_parameter_1$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/gitCommit:result",
-						schema: _deepseek_ai_dsh_ide_ide_gitCommit_result$schema
+						typeSymbol: "dsh-ide-ui#ide/gitCommit:result",
+						schema: _dsh_ide_ui_ide_gitCommit_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4333,7 +4333,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitDiff",
+					id: "dsh-ide-ui#ide/gitDiff",
 					service: "ide",
 					namespace: "ide",
 					method: "gitDiff",
@@ -4344,8 +4344,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitDiff:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitDiff_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitDiff:cwd",
+							schema: _dsh_ide_ui_ide_gitDiff_parameter_0$schema
 						}
 					}, {
 						name: "path",
@@ -4354,14 +4354,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						acceptsUndefined: true,
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitDiff:path",
-							schema: _deepseek_ai_dsh_ide_ide_gitDiff_parameter_1$schema
+							typeSymbol: "dsh-ide-ui#ide/gitDiff:path",
+							schema: _dsh_ide_ui_ide_gitDiff_parameter_1$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide/types#GitDiffResult",
-						schema: _deepseek_ai_dsh_ide_ide_gitDiff_result$schema
+						typeSymbol: "dsh-ide-ui/types#GitDiffResult",
+						schema: _dsh_ide_ui_ide_gitDiff_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4370,7 +4370,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitDiscard",
+					id: "dsh-ide-ui#ide/gitDiscard",
 					service: "ide",
 					namespace: "ide",
 					method: "gitDiscard",
@@ -4382,8 +4382,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							source: "json",
 							codec: {
 								mode: "strict",
-								typeSymbol: "@deepseek-ai/dsh-ide#ide/gitDiscard:cwd",
-								schema: _deepseek_ai_dsh_ide_ide_gitDiscard_parameter_0$schema
+								typeSymbol: "dsh-ide-ui#ide/gitDiscard:cwd",
+								schema: _dsh_ide_ui_ide_gitDiscard_parameter_0$schema
 							}
 						},
 						{
@@ -4392,8 +4392,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							source: "json",
 							codec: {
 								mode: "strict",
-								typeSymbol: "@deepseek-ai/dsh-ide#ide/gitDiscard:path",
-								schema: _deepseek_ai_dsh_ide_ide_gitDiscard_parameter_1$schema
+								typeSymbol: "dsh-ide-ui#ide/gitDiscard:path",
+								schema: _dsh_ide_ui_ide_gitDiscard_parameter_1$schema
 							}
 						},
 						{
@@ -4402,15 +4402,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							source: "json",
 							codec: {
 								mode: "strict",
-								typeSymbol: "@deepseek-ai/dsh-ide#ide/gitDiscard:untracked",
-								schema: _deepseek_ai_dsh_ide_ide_gitDiscard_parameter_2$schema
+								typeSymbol: "dsh-ide-ui#ide/gitDiscard:untracked",
+								schema: _dsh_ide_ui_ide_gitDiscard_parameter_2$schema
 							}
 						}
 					],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/gitDiscard:result",
-						schema: _deepseek_ai_dsh_ide_ide_gitDiscard_result$schema
+						typeSymbol: "dsh-ide-ui#ide/gitDiscard:result",
+						schema: _dsh_ide_ui_ide_gitDiscard_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4419,7 +4419,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitStage",
+					id: "dsh-ide-ui#ide/gitStage",
 					service: "ide",
 					namespace: "ide",
 					method: "gitStage",
@@ -4430,8 +4430,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitStage:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitStage_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitStage:cwd",
+							schema: _dsh_ide_ui_ide_gitStage_parameter_0$schema
 						}
 					}, {
 						name: "paths",
@@ -4439,14 +4439,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitStage:paths",
-							schema: _deepseek_ai_dsh_ide_ide_gitStage_parameter_1$schema
+							typeSymbol: "dsh-ide-ui#ide/gitStage:paths",
+							schema: _dsh_ide_ui_ide_gitStage_parameter_1$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/gitStage:result",
-						schema: _deepseek_ai_dsh_ide_ide_gitStage_result$schema
+						typeSymbol: "dsh-ide-ui#ide/gitStage:result",
+						schema: _dsh_ide_ui_ide_gitStage_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4455,7 +4455,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitStageAll",
+					id: "dsh-ide-ui#ide/gitStageAll",
 					service: "ide",
 					namespace: "ide",
 					method: "gitStageAll",
@@ -4466,14 +4466,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitStageAll:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitStageAll_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitStageAll:cwd",
+							schema: _dsh_ide_ui_ide_gitStageAll_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/gitStageAll:result",
-						schema: _deepseek_ai_dsh_ide_ide_gitStageAll_result$schema
+						typeSymbol: "dsh-ide-ui#ide/gitStageAll:result",
+						schema: _dsh_ide_ui_ide_gitStageAll_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4482,7 +4482,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitStatus",
+					id: "dsh-ide-ui#ide/gitStatus",
 					service: "ide",
 					namespace: "ide",
 					method: "gitStatus",
@@ -4493,14 +4493,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitStatus:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitStatus_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitStatus:cwd",
+							schema: _dsh_ide_ui_ide_gitStatus_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide/types#GitStatusResult",
-						schema: _deepseek_ai_dsh_ide_ide_gitStatus_result$schema
+						typeSymbol: "dsh-ide-ui/types#GitStatusResult",
+						schema: _dsh_ide_ui_ide_gitStatus_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4509,7 +4509,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitUnstage",
+					id: "dsh-ide-ui#ide/gitUnstage",
 					service: "ide",
 					namespace: "ide",
 					method: "gitUnstage",
@@ -4520,8 +4520,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitUnstage:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitUnstage_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitUnstage:cwd",
+							schema: _dsh_ide_ui_ide_gitUnstage_parameter_0$schema
 						}
 					}, {
 						name: "paths",
@@ -4529,14 +4529,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitUnstage:paths",
-							schema: _deepseek_ai_dsh_ide_ide_gitUnstage_parameter_1$schema
+							typeSymbol: "dsh-ide-ui#ide/gitUnstage:paths",
+							schema: _dsh_ide_ui_ide_gitUnstage_parameter_1$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/gitUnstage:result",
-						schema: _deepseek_ai_dsh_ide_ide_gitUnstage_result$schema
+						typeSymbol: "dsh-ide-ui#ide/gitUnstage:result",
+						schema: _dsh_ide_ui_ide_gitUnstage_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4545,7 +4545,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/gitUnstageAll",
+					id: "dsh-ide-ui#ide/gitUnstageAll",
 					service: "ide",
 					namespace: "ide",
 					method: "gitUnstageAll",
@@ -4556,14 +4556,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/gitUnstageAll:cwd",
-							schema: _deepseek_ai_dsh_ide_ide_gitUnstageAll_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/gitUnstageAll:cwd",
+							schema: _dsh_ide_ui_ide_gitUnstageAll_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/gitUnstageAll:result",
-						schema: _deepseek_ai_dsh_ide_ide_gitUnstageAll_result$schema
+						typeSymbol: "dsh-ide-ui#ide/gitUnstageAll:result",
+						schema: _dsh_ide_ui_ide_gitUnstageAll_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4572,7 +4572,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/listDir",
+					id: "dsh-ide-ui#ide/listDir",
 					service: "ide",
 					namespace: "ide",
 					method: "listDir",
@@ -4583,14 +4583,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/listDir:path",
-							schema: _deepseek_ai_dsh_ide_ide_listDir_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/listDir:path",
+							schema: _dsh_ide_ui_ide_listDir_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide/types#ListDirResult",
-						schema: _deepseek_ai_dsh_ide_ide_listDir_result$schema
+						typeSymbol: "dsh-ide-ui/types#ListDirResult",
+						schema: _dsh_ide_ui_ide_listDir_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4599,7 +4599,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/mkdir",
+					id: "dsh-ide-ui#ide/mkdir",
 					service: "ide",
 					namespace: "ide",
 					method: "mkdir",
@@ -4610,14 +4610,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/mkdir:path",
-							schema: _deepseek_ai_dsh_ide_ide_mkdir_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/mkdir:path",
+							schema: _dsh_ide_ui_ide_mkdir_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/mkdir:result",
-						schema: _deepseek_ai_dsh_ide_ide_mkdir_result$schema
+						typeSymbol: "dsh-ide-ui#ide/mkdir:result",
+						schema: _dsh_ide_ui_ide_mkdir_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4626,7 +4626,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/newFile",
+					id: "dsh-ide-ui#ide/newFile",
 					service: "ide",
 					namespace: "ide",
 					method: "newFile",
@@ -4637,14 +4637,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/newFile:path",
-							schema: _deepseek_ai_dsh_ide_ide_newFile_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/newFile:path",
+							schema: _dsh_ide_ui_ide_newFile_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/newFile:result",
-						schema: _deepseek_ai_dsh_ide_ide_newFile_result$schema
+						typeSymbol: "dsh-ide-ui#ide/newFile:result",
+						schema: _dsh_ide_ui_ide_newFile_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4653,7 +4653,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/paste",
+					id: "dsh-ide-ui#ide/paste",
 					service: "ide",
 					namespace: "ide",
 					method: "paste",
@@ -4664,14 +4664,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/paste:dest",
-							schema: _deepseek_ai_dsh_ide_ide_paste_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/paste:dest",
+							schema: _dsh_ide_ui_ide_paste_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/paste:result",
-						schema: _deepseek_ai_dsh_ide_ide_paste_result$schema
+						typeSymbol: "dsh-ide-ui#ide/paste:result",
+						schema: _dsh_ide_ui_ide_paste_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4680,7 +4680,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/readText",
+					id: "dsh-ide-ui#ide/readText",
 					service: "ide",
 					namespace: "ide",
 					method: "readText",
@@ -4691,14 +4691,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/readText:path",
-							schema: _deepseek_ai_dsh_ide_ide_readText_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/readText:path",
+							schema: _dsh_ide_ui_ide_readText_parameter_0$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide/types#ReadTextResult",
-						schema: _deepseek_ai_dsh_ide_ide_readText_result$schema
+						typeSymbol: "dsh-ide-ui/types#ReadTextResult",
+						schema: _dsh_ide_ui_ide_readText_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4707,7 +4707,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/rename",
+					id: "dsh-ide-ui#ide/rename",
 					service: "ide",
 					namespace: "ide",
 					method: "rename",
@@ -4718,8 +4718,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/rename:from",
-							schema: _deepseek_ai_dsh_ide_ide_rename_parameter_0$schema
+							typeSymbol: "dsh-ide-ui#ide/rename:from",
+							schema: _dsh_ide_ui_ide_rename_parameter_0$schema
 						}
 					}, {
 						name: "to",
@@ -4727,14 +4727,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						source: "json",
 						codec: {
 							mode: "strict",
-							typeSymbol: "@deepseek-ai/dsh-ide#ide/rename:to",
-							schema: _deepseek_ai_dsh_ide_ide_rename_parameter_1$schema
+							typeSymbol: "dsh-ide-ui#ide/rename:to",
+							schema: _dsh_ide_ui_ide_rename_parameter_1$schema
 						}
 					}],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide#ide/rename:result",
-						schema: _deepseek_ai_dsh_ide_ide_rename_result$schema
+						typeSymbol: "dsh-ide-ui#ide/rename:result",
+						schema: _dsh_ide_ui_ide_rename_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4743,7 +4743,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/roots",
+					id: "dsh-ide-ui#ide/roots",
 					service: "ide",
 					namespace: "ide",
 					method: "roots",
@@ -4751,8 +4751,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					parameters: [],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide/types#RootsResult",
-						schema: _deepseek_ai_dsh_ide_ide_roots_result$schema
+						typeSymbol: "dsh-ide-ui/types#RootsResult",
+						schema: _dsh_ide_ui_ide_roots_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4761,7 +4761,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					}
 				},
 				{
-					id: "@deepseek-ai/dsh-ide#ide/search",
+					id: "dsh-ide-ui#ide/search",
 					service: "ide",
 					namespace: "ide",
 					method: "search",
@@ -4773,8 +4773,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							source: "json",
 							codec: {
 								mode: "strict",
-								typeSymbol: "@deepseek-ai/dsh-ide#ide/search:cwd",
-								schema: _deepseek_ai_dsh_ide_ide_search_parameter_0$schema
+								typeSymbol: "dsh-ide-ui#ide/search:cwd",
+								schema: _dsh_ide_ui_ide_search_parameter_0$schema
 							}
 						},
 						{
@@ -4783,8 +4783,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							source: "json",
 							codec: {
 								mode: "strict",
-								typeSymbol: "@deepseek-ai/dsh-ide#ide/search:query",
-								schema: _deepseek_ai_dsh_ide_ide_search_parameter_1$schema
+								typeSymbol: "dsh-ide-ui#ide/search:query",
+								schema: _dsh_ide_ui_ide_search_parameter_1$schema
 							}
 						},
 						{
@@ -4793,15 +4793,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							source: "json",
 							codec: {
 								mode: "strict",
-								typeSymbol: "@deepseek-ai/dsh-ide#ide/search:caseSensitive",
-								schema: _deepseek_ai_dsh_ide_ide_search_parameter_2$schema
+								typeSymbol: "dsh-ide-ui#ide/search:caseSensitive",
+								schema: _dsh_ide_ui_ide_search_parameter_2$schema
 							}
 						}
 					],
 					result: {
 						mode: "strict",
-						typeSymbol: "@deepseek-ai/dsh-ide/types#SearchResult",
-						schema: _deepseek_ai_dsh_ide_ide_search_result$schema
+						typeSymbol: "dsh-ide-ui/types#SearchResult",
+						schema: _dsh_ide_ui_ide_search_result$schema
 					},
 					sourceLocation: {
 						"file": "packages/host/ide/src/index.ts",
@@ -4872,7 +4872,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		* Shared leaf: pure helpers and wire types for the IDE sidebar / editor
 		* column. No React state, no ctx, no side effects — everything here is a
 		* pure function or a plain data shape.
-		* @module @deepseek-ai/dsh-client-ui-ide/client/lib
+		* @module dsh-client-ide-ui/client/lib
 		*/
 		/** Unwrap a Remote result envelope: a Host throw becomes { ok:false, error }. */
 		async function rpc(p) {
@@ -4989,7 +4989,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		/**
 		* Icon glyphs: native DSH `ic_ds_*`-style 16/14 viewBox paths, rendered as
 		* inline SVG. Pure presentation — no state, no ctx.
-		* @module @deepseek-ai/dsh-client-ui-ide/client/icons
+		* @module dsh-client-ide-ui/client/icons
 		*/
 		const P = (d) => ({
 			d,
@@ -5111,7 +5111,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		* Sidebar views: Explorer (file tree), Search, Source Control, Sessions.
 		* Pure presentation — all data and callbacks arrive through props (the
 		* registrant inject face + framework hook snapshots). No ctx reach.
-		* @module @deepseek-ai/dsh-client-ui-ide/client/views
+		* @module dsh-client-ide-ui/client/views
 		*/
 		function Tree(props) {
 			const { ide, rpc } = props.injected;
@@ -5991,7 +5991,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		* Source Control / Sessions). Registers into `sidebar.workspaces`; it reads
 		* the framework's global `useSessions` / `useWorkspaces` hooks (passed as the
 		* root-scope runtime share) and the registrant inject face. Pure presentation.
-		* @module @deepseek-ai/dsh-client-ui-ide/client/IdeSidebar
+		* @module dsh-client-ide-ui/client/IdeSidebar
 		*/
 		function IdeSidebar(props) {
 			const el = react.createElement;
@@ -6098,7 +6098,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		* the shared editor store (passed via the inject face) and the `ide` Remote.
 		* Registers into `editor` (ui-layout #6) or, as a fallback, a
 		* `conversation.view` tab. Pure presentation.
-		* @module @deepseek-ai/dsh-client-ui-ide/client/EditorView
+		* @module dsh-client-ide-ui/client/EditorView
 		*/
 		function FileEditor(props) {
 			const { ide, rpc: call } = props.injected;
@@ -6219,9 +6219,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		//#endregion
 		//#region \0dshide:D:\working\projects\deepseek-harness-UI\packages\client-ui-ide\src\client\styles.module.css.mjs
 		const css = "﻿\r\n.dshide-region{height:100%;width:100%;display:flex;flex-direction:row;overflow:hidden;color:var(--dsw-alias-label-primary);font-size:14px;}.dshide-region *{box-sizing:border-box;}.dshide-activity{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-right:1px solid var(--dsw-alias-border-l1);}.dshide-activity-btn{position:relative;width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;padding:0;border-radius:8px;}.dshide-activity-btn:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-activity-btn.active{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-activity-btn.active::before{content:\"\";position:absolute;left:-2px;top:9px;bottom:9px;width:2px;border-radius:0 2px 2px 0;background:var(--dsw-alias-brand-primary);}.dshide-content{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}.dshide-region.rail{flex-direction:column;align-items:center;gap:2px;padding:6px 0;}.dshide-region.rail .dshide-activity-btn{width:36px;height:36px;}.dshide-view{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}.dshide-toolbar{flex:none;display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-title{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}.dshide-select{flex:1;min-width:0;height:28px;border:1px solid var(--dsw-alias-border-l1);border-radius:6px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:0 6px;}.dshide-iconbtn{width:28px;height:28px;flex:none;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;border-radius:6px;padding:0;font-size:13px;}.dshide-iconbtn:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));color:var(--dsw-alias-label-primary);}.dshide-seg{flex:none;display:flex;align-items:center;background:var(--dsw-alias-bg-layer-2,transparent);border-radius:6px;padding:1px;}.dshide-seg-btn{height:24px;padding:0 10px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:13px;border-radius:5px;}.dshide-seg-btn.on{background:var(--dsw-alias-bg-overlay,var(--dsw-alias-bg-layer-1));color:var(--dsw-alias-label-primary);box-shadow:0 1px 2px rgba(0,0,0,.1);}.dshide-scroll{flex:1;min-height:0;overflow:auto;}.dshide-row{display:flex;align-items:center;gap:6px;height:32px;flex:none;padding:0 8px;cursor:pointer;user-select:none;white-space:nowrap;color:var(--dsw-alias-label-primary);}.dshide-row:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-row.selected{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-arrow{width:14px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary);transition:transform .12s ease;}.dshide-arrow.open{transform:rotate(90deg);}.dshide-glyph{flex:none;color:var(--dsw-alias-label-secondary);}.dshide-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:20px;}.dshide-time{flex:none;color:var(--dsw-alias-label-secondary);font-size:12px;}.dshide-dot{flex:none;border-radius:50%;display:inline-block;}.dshide-dot-done{background:var(--dsw-alias-state-success-primary);}.dshide-dot-warning{background:var(--dsw-alias-state-warn-primary);}.dshide-dot-error{background:var(--dsw-alias-state-error-primary);}.dshide-dot-idle{background:var(--dsw-alias-label-secondary);opacity:.35;}.dshide-dot-matrix{flex:none;display:block;}.dshide-dot-cell{fill:var(--dsw-alias-brand-primary);animation:dshide-blink 1s linear infinite;}@keyframes dshide-blink{0%,100%{opacity:.2}50%{opacity:1}}.dshide-wsgroup-title{display:flex;align-items:center;gap:6px;height:34px;flex:none;padding:0 8px;cursor:pointer;user-select:none;font-weight:600;font-size:13px;color:var(--dsw-alias-label-primary);}.dshide-wsgroup-title:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-loading{padding:16px;color:var(--dsw-alias-label-secondary);font-size:14px;}.dshide-empty{padding:16px 14px;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;}.dshide-preview-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--dsw-alias-label-secondary);}.dshide-code{flex:1;min-height:0;overflow:auto;margin:0;padding:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:20px;}.dshide-codeline{display:flex;}.dshide-lineno{flex:none;width:44px;text-align:right;padding-right:12px;color:var(--dsw-alias-label-secondary);user-select:none;opacity:.6;}.dshide-linetext{white-space:pre;}.tok-kw{color:var(--dsw-alias-brand-primary);}.tok-str{color:var(--dsw-alias-state-success-primary);}.tok-com{color:var(--dsw-alias-label-secondary);font-style:italic;opacity:.7;}.tok-num{color:var(--dsw-alias-state-warn-primary);}.tok-bool{color:var(--dsw-alias-brand-primary);}.tok-tag{color:var(--dsw-alias-brand-primary);}.tok-attr{color:var(--dsw-alias-state-warn-primary);}.tok-prop{color:var(--dsw-alias-label-primary);}.tok-json-key{color:var(--dsw-alias-brand-primary);}.tok-md-heading{color:var(--dsw-alias-label-primary);font-weight:700;}.tok-bold{font-weight:700;}.tok-link{color:var(--dsw-alias-brand-primary);text-decoration:underline;}.dshide-row-actions{flex:none;display:none;align-items:center;gap:2px;}.dshide-row:hover .dshide-row-actions,.dshide-wsgroup-title:hover .dshide-row-actions{display:flex;}.dshide-row-btn{flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;border-radius:4px;padding:0;}.dshide-row-btn:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));color:var(--dsw-alias-label-primary);}.dshide-actionbar{flex:none;display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-actionbar-label{flex:none;font-size:14px;color:var(--dsw-alias-label-secondary);}.dshide-actionbar-input{flex:1;min-width:0;height:28px;border:1px solid var(--dsw-alias-brand-primary);border-radius:6px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:0 8px;outline:none;}.dshide-search-box{flex:none;display:flex;align-items:center;gap:4px;padding:8px;}.dshide-search-input{flex:1;min-width:0;height:32px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:0 10px;outline:none;}.dshide-search-input:focus{border-color:var(--dsw-alias-brand-primary);}.dshide-results{flex:1;min-height:0;overflow:auto;}.dshide-result-summary{padding:8px 12px;font-size:13px;color:var(--dsw-alias-label-secondary);border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-match{padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-match:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-match-path{font-size:13px;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;}.dshide-match-line{display:flex;gap:8px;font-family:ui-monospace,Consolas,monospace;font-size:12px;}.dshide-match-lineno{flex:none;color:var(--dsw-alias-brand-primary);min-width:20px;text-align:right;}.dshide-match-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary);}.dshide-scm{flex:1;min-height:0;overflow:auto;}.dshide-scm-group-title{padding:10px 12px 4px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dsw-alias-label-secondary);}.dshide-scm-status{flex:none;width:14px;text-align:center;font-family:ui-monospace,monospace;font-weight:700;font-size:13px;color:var(--dsw-alias-state-warn-primary);}.dshide-branch{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--dsw-alias-label-primary);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 4px;}.dshide-rename{color:var(--dsw-alias-label-secondary);font-size:12px;}.dshide-diff-line{white-space:pre;padding-left:8px;}.dshide-diff-line.add{background:color-mix(in srgb,var(--dsw-alias-state-success-primary) 12%,transparent);color:var(--dsw-alias-state-success-primary);}.dshide-diff-line.del{background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent);color:var(--dsw-alias-state-error-primary);}.dshide-diff-line.hunk{color:var(--dsw-alias-brand-primary);}.dshide-commit{flex:none;display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-commit-input{flex:1;min-width:0;height:56px;resize:none;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:8px;font-family:inherit;outline:none;}.dshide-commit-input:focus{border-color:var(--dsw-alias-brand-primary);}.dshide-commit-btn{flex:none;align-self:flex-start;height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--dsw-alias-brand-primary);color:#fff;font-size:14px;cursor:pointer;}.dshide-commit-btn:disabled{opacity:.4;cursor:default;}.dshide-editor{flex:1;min-height:0;height:100%;display:flex;flex-direction:column;overflow:hidden;width:100%;}.dshide-etabs{flex:none;display:flex;align-items:stretch;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--dsw-alias-border-l1);overflow-x:auto;background:var(--dsw-alias-bg-base);}.dshide-etab{flex:none;display:flex;align-items:center;gap:6px;max-width:200px;height:28px;padding:0 6px 0 10px;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:13px;line-height:26px;}.dshide-etab:hover{background:var(--dsw-alias-interactive-bg-hover);}.dshide-etab.active{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-border-l1);}.dshide-etab-label{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}.dshide-etab-close{width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-tertiary);cursor:pointer;border-radius:4px;padding:0;}.dshide-etab-close:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover);}.dshide-etab-hint{flex:none;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:28px;padding-left:4px;}.dshide-editor-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-tertiary);font-size:13px;}.dshide-editor-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}.dshide-editor-body .dshide-preview-path{flex:none;padding:8px 12px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-editor-body .dshide-code{flex:1;min-height:0;overflow:auto;}\r\n";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=\"@deepseek-ai/dsh-client-ui-ide/styles\"]") === null) {
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=\"dsh-client-ide-ui/styles\"]") === null) {
 			const tag = document.createElement("style");
-			tag.dataset.pluginCss = "@deepseek-ai/dsh-client-ui-ide/styles";
+			tag.dataset.pluginCss = "dsh-client-ide-ui/styles";
 			tag.textContent = css;
 			document.head.appendChild(tag);
 		}

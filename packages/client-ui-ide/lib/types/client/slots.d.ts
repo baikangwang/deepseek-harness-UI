@@ -5,9 +5,9 @@
  * themselves are declared by the owner packages (ui-sidebar, ui-layout,
  * ui-conversation); this module only pulls them into scope and types the
  * registrant's own share.
- * @module @deepseek-ai/dsh-client-ui-ide/client/slots
+ * @module dsh-client-ide-ui/client/slots
  */
-import type { IdeRemoteFace, RemoteResult } from '@deepseek-ai/dsh-ide/types';
+import type { IdeRemoteFace, RemoteResult } from 'dsh-ide-ui/types';
 import type { IdeTab } from './lib.ts';
 import type { IdeStore } from './stores.ts';
 /** Registrant business face: plain data and callbacks over the `ide` Remote + session/workspace services. */

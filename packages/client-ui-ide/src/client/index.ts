@@ -3,12 +3,12 @@
  * shared editor store, and register the surfaces. The editor is a
  * `conversation.view` tab (official slot, distributable); there is NO shell
  * dependency — the plugin composes only through declared slots.
- * @module @deepseek-ai/dsh-client-ui-ide/client
+ * @module dsh-client-ide-ui/client
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import ideRemote from '@deepseek-ai/dsh-ide/remote'
-import type { IdeRemoteFace } from '@deepseek-ai/dsh-ide/types'
+import ideRemote from 'dsh-ide-ui/remote'
+import type { IdeRemoteFace } from 'dsh-ide-ui/types'
 // Type-only: resolve the injected client service augmentations + branded ids.
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { SessionId, WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'

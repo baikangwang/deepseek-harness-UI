@@ -3,7 +3,7 @@
  * shared editor store, and register the surfaces. The editor is a
  * `conversation.view` tab (official slot, distributable); there is NO shell
  * dependency — the plugin composes only through declared slots.
- * @module @deepseek-ai/dsh-client-ui-ide/client
+ * @module dsh-client-ide-ui/client
  */
 import type { Context } from '@deepseek-ai/cordis';
 /** Required services (cordis fiber inject). */

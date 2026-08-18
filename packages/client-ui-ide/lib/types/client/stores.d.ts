@@ -3,7 +3,7 @@
  * sidebar (opens a tab) and the editor column (renders the tabs). A
  * `createIdeStore()` factory, created once inside `apply` and handed to both
  * registrations — never a module-level singleton (packages/client/AGENTS.md).
- * @module @deepseek-ai/dsh-client-ui-ide/client/stores
+ * @module dsh-client-ide-ui/client/stores
  */
 import type { IdeTab } from './lib.ts';
 export interface IdeStore {

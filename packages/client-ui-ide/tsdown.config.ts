@@ -7,11 +7,11 @@ import { defineConfig } from 'tsdown'
  * with the module-loader closure handoff, plus the trivial node half and the
  * invariant companion. No DSH monorepo machinery:
  * - `react` stays external (loader platform module); everything else
- *   (`@deepseek-ai/dsh-ide/remote`, zod, all client code) is inlined.
+ *   (`dsh-ide-ui/remote`, zod, all client code) is inlined.
  * - `styles.module.css` is injected via a tiny plugin (global classes — the
  *   file is emitted as-is into a <style data-plugin-css> tag).
  */
-const ID = '@deepseek-ai/dsh-client-ui-ide'
+const ID = 'dsh-client-ide-ui'
 
 const cssInject = (): object => ({
   name: 'dshide-css-inject',

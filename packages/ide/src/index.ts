@@ -1,5 +1,5 @@
 /**
- * deepseek-harness-UI — Host half: the `ide` Remote namespace.
+ * ide-ui — Host half: the `ide` Remote namespace.
  *
  * A single `TypertRemoteService` (registered as `ide`) exposes the file /
  * git / search primitives the browser client (the sidebar and editor column)

@@ -3,7 +3,7 @@
  * the shared editor store (passed via the inject face) and the `ide` Remote.
  * Registers into `editor` (ui-layout #6) or, as a fallback, a
  * `conversation.view` tab. Pure presentation.
- * @module @deepseek-ai/dsh-client-ui-ide/client/EditorView
+ * @module dsh-client-ide-ui/client/EditorView
  */
 import { createElement, useEffect, useState } from 'react';
 import { Icon } from "./icons.js";

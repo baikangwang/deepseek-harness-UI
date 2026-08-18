@@ -1,5 +1,5 @@
 //#region src/invariant.ts
-const PACKAGE_NAME = "@deepseek-ai/dsh-ide";
+const PACKAGE_NAME = "dsh-ide-ui";
 /** Cordis companion plugin name. */
 const name = "ide-invariant";
 /** Service required before the companion can reserve package ownership. */

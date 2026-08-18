@@ -2,7 +2,7 @@
  * Sidebar views: Explorer (file tree), Search, Source Control, Sessions.
  * Pure presentation — all data and callbacks arrive through props (the
  * registrant inject face + framework hook snapshots). No ctx reach.
- * @module @deepseek-ai/dsh-client-ui-ide/client/views
+ * @module dsh-client-ide-ui/client/views
  */
 
 import { createElement, useEffect, useState } from 'react'

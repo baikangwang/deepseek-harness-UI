@@ -3,7 +3,7 @@
  * Source Control / Sessions). Registers into `sidebar.workspaces`; it reads
  * the framework's global `useSessions` / `useWorkspaces` hooks (passed as the
  * root-scope runtime share) and the registrant inject face. Pure presentation.
- * @module @deepseek-ai/dsh-client-ui-ide/client/IdeSidebar
+ * @module dsh-client-ide-ui/client/IdeSidebar
  */
 import { createElement, useEffect, useState } from 'react';
 import { Icon } from "./icons.js";

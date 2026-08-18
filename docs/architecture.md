@@ -91,4 +91,4 @@ git 通过 `ctx.subprocess.spawn({ argv, cwd, stdio })` 执行，**不经过 she
   - SCM 的 stage / unstage / commit（`git add`/`reset`/`commit` + 提交信息输入）。
   - 搜索 ripgrep 快路径 + 失败回退到递归扫描。
 - [ ] **P2**：编辑器升级（shiki 高亮、行内 diff、可写 + 保存）、分支切换、替换式搜索、正则 / glob 过滤。
-- [ ] **P3（正式化）**：抽成 `@deepseek-ai/dsh-ide` 包 —— Host 能力抽为 Service（`ctx.ide`），Client→Host 走 `ctx.remote`，Client 复用 UI primitives 与 `ReadBlock`/`DiffBlock`/`SearchBlock`。
+- [ ] **P3（正式化）**：抽成 `dsh-ide-ui` 包 —— Host 能力抽为 Service（`ctx.ide`），Client→Host 走 `ctx.remote`，Client 复用 UI primitives 与 `ReadBlock`/`DiffBlock`/`SearchBlock`。

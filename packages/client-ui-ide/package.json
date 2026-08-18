@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-ide",
-  "description": "deepseek-harness-UI client half: VSCode-style Explorer / Search / Source Control / Sessions sidebar and editor column for the DeepSeek Harness Web UI.",
-  "version": "0.1.0",
+  "name": "dsh-client-ide-ui",
+  "description": "ide-ui client half: VSCode-style Explorer / Search / Source Control / Sessions sidebar and editor column for the DeepSeek Harness Web UI. Unofficial community plugin.",
+  "version": "0.1.0-rc.7",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baikangwang/deepseek-harness-UI.git",
+    "url": "git+https://github.com/baikangwang/dsh-ide-ui.git",
     "directory": "packages/client-ui-ide"
   },
   "type": "module",
@@ -54,7 +54,7 @@
     "@deepseek-ai/dsh-api-gateway": ">=0.1.0-rc.7 <0.2.0-0",
     "@deepseek-ai/dsh-api-remotes": ">=0.1.0-rc.7 <0.2.0-0",
     "@deepseek-ai/dsh-client-runtime": ">=0.1.0-rc.7 <0.2.0-0",
-    "@deepseek-ai/dsh-ide": ">=0.1.0-rc.7 <0.2.0-0",
+    "dsh-ide-ui": ">=0.1.0-rc.7 <0.2.0-0",
     "@deepseek-ai/dsh-invariants": ">=0.1.0-rc.7 <0.2.0-0",
     "react": "^18.2.0"
   },
@@ -66,7 +66,7 @@
     "@deepseek-ai/dsh-client-ui-conversation": "0.1.0-rc.7",
     "@deepseek-ai/dsh-client-ui-sidebar": "0.1.0-rc.7",
     "@deepseek-ai/dsh-client-ui-slots": "0.1.0-rc.7",
-    "@deepseek-ai/dsh-ide": "workspace:*",
+    "dsh-ide-ui": "workspace:*",
     "@deepseek-ai/dsh-invariants": "0.1.0-rc.7",
     "@types/react": "~18.3.1",
     "react": "^18.2.0",

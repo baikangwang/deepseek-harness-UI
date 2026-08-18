@@ -1,6 +1,6 @@
-# @deepseek-ai/dsh-ide
+# dsh-ide-ui
 
-deepseek-harness-UI 的 **Host 面**：`ide` Remote 命名空间。一个 `TypertRemoteService`（注册为 `ide`）把文件 / git / 查找原语暴露给浏览器客户端（`@deepseek-ai/dsh-client-ui-ide` 经 `ctx.remote.ide.*` 调用）。所有能力都来自 Host 服务，绝不手搓 shell：
+ide-ui 的 **Host 半**（非官方社区插件）：`ide` Remote 命名空间。一个 `TypertRemoteService`（注册为 `ide`）把文件 / git / 查找原语暴露给浏览器客户端（`dsh-client-ide-ui` 经 `ctx.remote.ide.*` 调用）。所有能力都来自 Host 服务，绝不手搓 shell：
 
 - `ctx.fs` — 目录列举 / 读文本 / 新建文件 / 递归查找
 - `ctx.subprocess` — `git` 与 `rg`（显式 argv，无 shell 拼接）

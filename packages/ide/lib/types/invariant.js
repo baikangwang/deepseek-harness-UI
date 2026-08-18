@@ -1,8 +1,8 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-ide`.
- * @module @deepseek-ai/dsh-ide/invariant
+ * Package-owned invariant companion for `dsh-ide-ui`.
+ * @module dsh-ide-ui/invariant
  */
-const PACKAGE_NAME = '@deepseek-ai/dsh-ide';
+const PACKAGE_NAME = 'dsh-ide-ui';
 /** Cordis companion plugin name. */
 export const name = 'ide-invariant';
 /** Service required before the companion can reserve package ownership. */

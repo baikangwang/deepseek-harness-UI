@@ -1,5 +1,5 @@
 {
-  "name": "deepseek-harness-UI",
+  "name": "dsh-ide-ui",
   "private": true,
   "type": "module",
   "scripts": {

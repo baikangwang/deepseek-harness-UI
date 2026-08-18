@@ -2,7 +2,7 @@
  * Shared leaf: pure helpers and wire types for the IDE sidebar / editor
  * column. No React state, no ctx, no side effects — everything here is a
  * pure function or a plain data shape.
- * @module @deepseek-ai/dsh-client-ui-ide/client/lib
+ * @module dsh-client-ide-ui/client/lib
  */
 import { createElement } from 'react';
 /** Unwrap a Remote result envelope: a Host throw becomes { ok:false, error }. */

@@ -4,7 +4,7 @@
 
 ## 1. 现状（不变）
 
-已合规：双包单聚合、invariant、README Model Experience、`package.json` 不变量、Client 契约（`ctx.slots.inject` + inject face + store 工厂 + 独立组件 + CSS Modules + 导出纪律）、Host 18 个 `@Remote` + `@deepseek-ai/dsh-ide` 命名过纯度门禁。
+已合规：双包单聚合、invariant、README Model Experience、`package.json` 不变量、Client 契约（`ctx.slots.inject` + inject face + store 工厂 + 独立组件 + CSS Modules + 导出纪律）、Host 18 个 `@Remote` + 无 scope 命名（`dsh-ide-ui`）。
 
 已实现（上轮）：P1（`editor` 注册运行时探测 cast，干净官方可编译）、P3（`packages/bundle` 组合包）。
 
@@ -43,7 +43,7 @@ overlays/dsh-client-ui-layout.patch   # 四列 AppFrame + editor 槽 + ctx.layou
 
 ### 2.4 其余决策对齐（不变）
 
-- 命名 2A：`@deepseek-ai/dsh-ide` + `@deepseek-ai/dsh-client-ui-ide`（纯度门禁唯一放行）。
+- 命名 2A：`dsh-ide-ui` + `dsh-client-ide-ui`（无 scope 第三方命名；自包含构建后纯度门禁不适用，见 refactor-decision 决策 2）。
 - 仓库 3B：多包（ide / client-ui-ide / bundle），独立版本。
 - P3 bundle：`dsh.bundle` + `dsh plugin add`（已实现）。
 - P4：发布前 `workspace:*` → `0.1.0-rc.7` 精确锁版。

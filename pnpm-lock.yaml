@@ -8,7 +8,14 @@ importers:
 
   .: {}
 
-  packages/bundle: {}
+  packages/bundle:
+    dependencies:
+      dsh-client-ide-ui:
+        specifier: workspace:^
+        version: link:../client-ui-ide
+      dsh-ide-ui:
+        specifier: workspace:^
+        version: link:../ide
 
   packages/client-ui-ide:
     devDependencies:
@@ -33,15 +40,15 @@ importers:
       '@deepseek-ai/dsh-client-ui-slots':
         specifier: 0.1.0-rc.7
         version: 0.1.0-rc.7(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.0-rc.7(@deepseek-ai/cordis@4.0.1))
-      '@deepseek-ai/dsh-ide':
-        specifier: workspace:*
-        version: link:../ide
       '@deepseek-ai/dsh-invariants':
         specifier: 0.1.0-rc.7
         version: 0.1.0-rc.7(@deepseek-ai/cordis@4.0.1)
       '@types/react':
         specifier: ~18.3.1
         version: 18.3.31
+      dsh-ide-ui:
+        specifier: workspace:*
+        version: link:../ide
       react:
         specifier: ^18.2.0
         version: 18.3.1
