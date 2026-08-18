@@ -1,8 +1,4 @@
-//#region lib/types/invariant.js
-/**
-* Package-owned invariant companion for `@deepseek-ai/dsh-client-ui-ide`.
-* @module @deepseek-ai/dsh-client-ui-ide/invariant
-*/
+//#region src/invariant.ts
 const PACKAGE_NAME = "@deepseek-ai/dsh-client-ui-ide";
 /** Cordis companion plugin name. */
 const name = "client-ui-ide-invariant";
