@@ -5,7 +5,7 @@ window.__ModuleLoader__.load({
 		var exports = module.exports;
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 		let react = require("react");
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/core.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/core.js
 		var _a$1;
 		function $constructor(name, initializer, params) {
 			function init(inst, def) {
@@ -64,7 +64,7 @@ window.__ModuleLoader__.load({
 			return globalConfig;
 		}
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/util.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/util.js
 		function getEnumValues(entries) {
 			const numericValues = Object.values(entries).filter((v) => typeof v === "number");
 			return Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
@@ -80,7 +80,6 @@ window.__ModuleLoader__.load({
 					Object.defineProperty(this, "value", { value });
 					return value;
 				}
-				throw new Error("cached value already set");
 			} };
 		}
 		function nullish(input) {
@@ -126,7 +125,10 @@ window.__ModuleLoader__.load({
 		}
 		function mergeDefs(...defs) {
 			const mergedDescriptors = {};
-			for (const def of defs) Object.assign(mergedDescriptors, Object.getOwnPropertyDescriptors(def));
+			for (const def of defs) {
+				const descriptors = Object.getOwnPropertyDescriptors(def);
+				Object.assign(mergedDescriptors, descriptors);
+			}
 			return Object.defineProperties({}, mergedDescriptors);
 		}
 		function esc(str) {
@@ -376,7 +378,7 @@ window.__ModuleLoader__.load({
 			return { ...iss };
 		}
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/errors.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/errors.js
 		const initializer$1 = (inst, def) => {
 			inst.name = "$ZodError";
 			Object.defineProperty(inst, "_zod", {
@@ -436,7 +438,7 @@ window.__ModuleLoader__.load({
 			return fieldErrors;
 		}
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/parse.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/parse.js
 		const _parse = (_Err) => (schema, value, _ctx, _params) => {
 			const ctx = _ctx ? {
 				..._ctx,
@@ -550,7 +552,7 @@ window.__ModuleLoader__.load({
 			return _safeParseAsync(_Err)(schema, value, _ctx);
 		};
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/regexes.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/regexes.js
 		/**
 		* @deprecated CUID v1 is deprecated by its authors due to information leakage
 		* (timestamps embedded in the id). Use {@link cuid2} instead.
@@ -615,7 +617,7 @@ window.__ModuleLoader__.load({
 		const lowercase = /^[^A-Z]*$/;
 		const uppercase = /^[^a-z]*$/;
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/checks.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/checks.js
 		const $ZodCheck = /*@__PURE__*/ $constructor("$ZodCheck", (inst, def) => {
 			var _a;
 			inst._zod ?? (inst._zod = {});
@@ -633,8 +635,10 @@ window.__ModuleLoader__.load({
 			inst._zod.onattach.push((inst) => {
 				const bag = inst._zod.bag;
 				const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
-				if (def.value < curr) if (def.inclusive) bag.maximum = def.value;
-				else bag.exclusiveMaximum = def.value;
+				if (def.value < curr) {
+					if (def.inclusive) bag.maximum = def.value;
+					else bag.exclusiveMaximum = def.value;
+				}
 			});
 			inst._zod.check = (payload) => {
 				if (def.inclusive ? payload.value <= def.value : payload.value < def.value) return;
@@ -655,8 +659,10 @@ window.__ModuleLoader__.load({
 			inst._zod.onattach.push((inst) => {
 				const bag = inst._zod.bag;
 				const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
-				if (def.value > curr) if (def.inclusive) bag.minimum = def.value;
-				else bag.exclusiveMinimum = def.value;
+				if (def.value > curr) {
+					if (def.inclusive) bag.minimum = def.value;
+					else bag.exclusiveMinimum = def.value;
+				}
 			});
 			inst._zod.check = (payload) => {
 				if (def.inclusive ? payload.value >= def.value : payload.value > def.value) return;
@@ -973,7 +979,7 @@ window.__ModuleLoader__.load({
 			};
 		});
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/doc.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/doc.js
 		var Doc = class {
 			constructor(args = []) {
 				this.content = [];
@@ -1004,14 +1010,14 @@ window.__ModuleLoader__.load({
 			}
 		};
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/versions.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/versions.js
 		const version = {
 			major: 4,
 			minor: 4,
 			patch: 3
 		};
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/schemas.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/schemas.js
 		const $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
 			var _a;
 			inst ?? (inst = {});
@@ -1427,7 +1433,7 @@ window.__ModuleLoader__.load({
 		const $ZodUndefined = /*@__PURE__*/ $constructor("$ZodUndefined", (inst, def) => {
 			$ZodType.init(inst, def);
 			inst._zod.pattern = _undefined$2;
-			inst._zod.values = new Set([void 0]);
+			inst._zod.values = /* @__PURE__ */ new Set([void 0]);
 			inst._zod.parse = (payload, _ctx) => {
 				const input = payload.value;
 				if (typeof input === "undefined") return payload;
@@ -1948,7 +1954,7 @@ window.__ModuleLoader__.load({
 			inst._zod.optin = "optional";
 			inst._zod.optout = "optional";
 			defineLazy(inst._zod, "values", () => {
-				return def.innerType._zod.values ? new Set([...def.innerType._zod.values, void 0]) : void 0;
+				return def.innerType._zod.values ? /* @__PURE__ */ new Set([...def.innerType._zod.values, void 0]) : void 0;
 			});
 			defineLazy(inst._zod, "pattern", () => {
 				const pattern = def.innerType._zod.pattern;
@@ -1982,7 +1988,7 @@ window.__ModuleLoader__.load({
 				return pattern ? new RegExp(`^(${cleanRegex(pattern.source)}|null)$`) : void 0;
 			});
 			defineLazy(inst._zod, "values", () => {
-				return def.innerType._zod.values ? new Set([...def.innerType._zod.values, null]) : void 0;
+				return def.innerType._zod.values ? /* @__PURE__ */ new Set([...def.innerType._zod.values, null]) : void 0;
 			});
 			inst._zod.parse = (payload, ctx) => {
 				if (payload.value === null) return payload;
@@ -2148,7 +2154,7 @@ window.__ModuleLoader__.load({
 			}
 		}
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/registries.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/registries.js
 		var _a;
 		var $ZodRegistry = class {
 			constructor() {
@@ -2195,7 +2201,7 @@ window.__ModuleLoader__.load({
 		(_a = globalThis).__zod_globalRegistry ?? (_a.__zod_globalRegistry = registry());
 		const globalRegistry = globalThis.__zod_globalRegistry;
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/api.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/api.js
 		// @__NO_SIDE_EFFECTS__
 		function _string(Class, params) {
 			return new Class({
@@ -2707,7 +2713,7 @@ window.__ModuleLoader__.load({
 			return ch;
 		}
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/to-json-schema.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/to-json-schema.js
 		function initializeContext(params) {
 			let target = params?.target ?? "draft-2020-12";
 			if (target === "draft-4") target = "draft-04";
@@ -2923,8 +2929,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					defs[seen.defId] = seen.def;
 				}
 			}
-			if (ctx.external) {} else if (Object.keys(defs).length > 0) if (ctx.target === "draft-2020-12") result.$defs = defs;
-			else result.definitions = defs;
+			if (ctx.external) {} else if (Object.keys(defs).length > 0) {
+				if (ctx.target === "draft-2020-12") result.$defs = defs;
+				else result.definitions = defs;
+			}
 			try {
 				const finalized = JSON.parse(JSON.stringify(result));
 				Object.defineProperty(finalized, "~standard", {
@@ -3000,7 +3008,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			return finalize(ctx, schema);
 		};
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/json-schema-processors.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/json-schema-processors.js
 		const formatMap = {
 			guid: "uuid",
 			url: "uri",
@@ -3037,16 +3045,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
 			const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
 			const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
-			if (exMin) if (legacy) {
-				json.minimum = exclusiveMinimum;
-				json.exclusiveMinimum = true;
-			} else json.exclusiveMinimum = exclusiveMinimum;
-			else if (typeof minimum === "number") json.minimum = minimum;
-			if (exMax) if (legacy) {
-				json.maximum = exclusiveMaximum;
-				json.exclusiveMaximum = true;
-			} else json.exclusiveMaximum = exclusiveMaximum;
-			else if (typeof maximum === "number") json.maximum = maximum;
+			if (exMin) {
+				if (legacy) {
+					json.minimum = exclusiveMinimum;
+					json.exclusiveMinimum = true;
+				} else json.exclusiveMinimum = exclusiveMinimum;
+			} else if (typeof minimum === "number") json.minimum = minimum;
+			if (exMax) {
+				if (legacy) {
+					json.maximum = exclusiveMaximum;
+					json.exclusiveMaximum = true;
+				} else json.exclusiveMaximum = exclusiveMaximum;
+			} else if (typeof maximum === "number") json.maximum = maximum;
 			if (typeof multipleOf === "number") json.multipleOf = multipleOf;
 		};
 		const booleanProcessor = (_schema, _ctx, json, _params) => {
@@ -3070,9 +3080,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const vals = [];
 			for (const val of def.values) if (val === void 0) {
 				if (ctx.unrepresentable === "throw") throw new Error("Literal `undefined` cannot be represented in JSON Schema");
-			} else if (typeof val === "bigint") if (ctx.unrepresentable === "throw") throw new Error("BigInt literals cannot be represented in JSON Schema");
-			else vals.push(Number(val));
-			else vals.push(val);
+			} else if (typeof val === "bigint") {
+				if (ctx.unrepresentable === "throw") throw new Error("BigInt literals cannot be represented in JSON Schema");
+				else vals.push(Number(val));
+			} else vals.push(val);
 			if (vals.length === 0) {} else if (vals.length === 1) {
 				const val = vals[0];
 				json.type = val === null ? "null" : typeof val;
@@ -3232,7 +3243,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			seen.ref = def.innerType;
 		};
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/iso.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/iso.js
 		const ZodISODateTime = /*@__PURE__*/ $constructor("ZodISODateTime", (inst, def) => {
 			$ZodISODateTime.init(inst, def);
 			ZodStringFormat.init(inst, def);
@@ -3262,7 +3273,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			return /* @__PURE__ */ _isoDuration(ZodISODuration, params);
 		}
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/errors.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/errors.js
 		const initializer = (inst, issues) => {
 			$ZodError.init(inst, issues);
 			inst.name = "ZodError";
@@ -3284,7 +3295,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		};
 		const ZodRealError = /*@__PURE__*/ $constructor("ZodError", initializer, { Parent: Error });
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/parse.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/parse.js
 		const parse = /* @__PURE__ */ _parse(ZodRealError);
 		const parseAsync = /* @__PURE__ */ _parseAsync(ZodRealError);
 		const safeParse = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -3298,7 +3309,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		const safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 		const safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 		//#endregion
-		//#region ../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/schemas.js
+		//#region ../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/classic/schemas.js
 		const _installedGroups = /* @__PURE__ */ new WeakMap();
 		function _installLazyMethods(inst, group, methods) {
 			const proto = Object.getPrototypeOf(inst);
@@ -3827,11 +3838,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			});
 		});
 		function object(shape, params) {
-			return new ZodObject({
+			const def = {
 				type: "object",
 				shape: shape ?? {},
 				...normalizeParams(params)
-			});
+			};
+			return new ZodObject(def);
 		}
 		const ZodUnion = /*@__PURE__*/ $constructor("ZodUnion", (inst, def) => {
 			$ZodUnion.init(inst, def);
@@ -3889,9 +3901,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			};
 		});
 		function _enum(values, params) {
+			const entries = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
 			return new ZodEnum({
 				type: "enum",
-				entries: Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values,
+				entries,
 				...normalizeParams(params)
 			});
 		}
@@ -4078,7 +4091,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			return /* @__PURE__ */ _superRefine(fn, params);
 		}
 		//#endregion
-		//#region ../../host/ide/lib/typert.remote-client.js
+		//#region ../ide/lib/typert.remote-client.js
 		const _deepseek_ai_dsh_ide_ide_delete_parameter_0$schema = string();
 		const _deepseek_ai_dsh_ide_ide_delete_result$schema = object({
 			"ok": boolean(),
@@ -4799,14 +4812,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			]
 		};
 		//#endregion
-		//#region lib/types/client/stores.js
-		/**
-		* Editor-column store: the open document / diff tabs shared between the
-		* sidebar (opens a tab) and the editor column (renders the tabs). A
-		* `createIdeStore()` factory, created once inside `apply` and handed to both
-		* registrations — never a module-level singleton (packages/client/AGENTS.md).
-		* @module @deepseek-ai/dsh-client-ui-ide/client/stores
-		*/
+		//#region src/client/stores.ts
 		/** Create one editor-tab store instance. */
 		function createIdeStore() {
 			let tabs = [];
@@ -4861,7 +4867,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			};
 		}
 		//#endregion
-		//#region lib/types/client/lib.js
+		//#region src/client/lib.ts
 		/**
 		* Shared leaf: pure helpers and wire types for the IDE sidebar / editor
 		* column. No React state, no ctx, no side effects — everything here is a
@@ -4972,13 +4978,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		}
 		/** Render one source line with token spans. */
 		function renderLine(line, lang) {
-			return (0, react.createElement)("span", { className: "dshide-linetext" }, tokenize(line, buildRules(lang)).map((s, i) => s[1] ? (0, react.createElement)("span", {
+			const segs = tokenize(line, buildRules(lang));
+			return (0, react.createElement)("span", { className: "dshide-linetext" }, segs.map((s, i) => s[1] ? (0, react.createElement)("span", {
 				key: i,
 				className: s[1]
 			}, s[0] ?? "") : s[0] ?? ""));
 		}
 		//#endregion
-		//#region lib/types/client/icons.js
+		//#region src/client/icons.tsx
 		/**
 		* Icon glyphs: native DSH `ic_ds_*`-style 16/14 viewBox paths, rendered as
 		* inline SVG. Pure presentation — no state, no ctx.
@@ -5099,7 +5106,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			}, def.p.map((s, i) => (0, react.createElement)(s[0], Object.assign({ key: i }, s[1]))));
 		}
 		//#endregion
-		//#region lib/types/client/views.js
+		//#region src/client/views.tsx
 		/**
 		* Sidebar views: Explorer (file tree), Search, Source Control, Sessions.
 		* Pure presentation — all data and callbacks arrive through props (the
@@ -5978,7 +5985,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			}))) : null, el("div", { className: "dshide-scroll" }, body));
 		}
 		//#endregion
-		//#region lib/types/client/IdeSidebar.js
+		//#region src/client/IdeSidebar.tsx
 		/**
 		* IDE sidebar: the activity rail plus the active view (Explorer / Search /
 		* Source Control / Sessions). Registers into `sidebar.workspaces`; it reads
@@ -6085,7 +6092,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			})));
 		}
 		//#endregion
-		//#region lib/types/client/EditorView.js
+		//#region src/client/EditorView.tsx
 		/**
 		* Editor column: the open file/diff tab strip plus the active viewer. Reads
 		* the shared editor store (passed via the inject face) and the `ide` Remote.
@@ -6159,9 +6166,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				className: "dshide-preview-path",
 				title: props.path
 			}, props.path), el("pre", { className: "dshide-code" }, lines.map((ln, i) => {
+				const cls = ln.startsWith("+") && !ln.startsWith("+++") ? "dshide-diff-line add" : ln.startsWith("-") && !ln.startsWith("---") ? "dshide-diff-line del" : ln.startsWith("@@") ? "dshide-diff-line hunk" : "dshide-diff-line";
 				return el("div", {
 					key: i,
-					className: ln.startsWith("+") && !ln.startsWith("+++") ? "dshide-diff-line add" : ln.startsWith("-") && !ln.startsWith("---") ? "dshide-diff-line del" : ln.startsWith("@@") ? "dshide-diff-line hunk" : "dshide-diff-line"
+					className: cls
 				}, ln || " ");
 			})));
 		}
@@ -6209,14 +6217,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			}));
 		}
 		//#endregion
-		//#region lib/types/client/index.js
-		/**
-		* deepseek-harness-UI client half, apply: mount the `ide` Remote, create the
-		* shared editor store, and register the surfaces. The editor is a
-		* `conversation.view` tab (official slot, distributable); there is NO shell
-		* dependency — the plugin composes only through declared slots.
-		* @module @deepseek-ai/dsh-client-ui-ide/client
-		*/
+		//#region \0dshide:D:\working\projects\deepseek-harness-UI\packages\client-ui-ide\src\client\styles.module.css.mjs
+		const css = "﻿\r\n.dshide-region{height:100%;width:100%;display:flex;flex-direction:row;overflow:hidden;color:var(--dsw-alias-label-primary);font-size:14px;}.dshide-region *{box-sizing:border-box;}.dshide-activity{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-right:1px solid var(--dsw-alias-border-l1);}.dshide-activity-btn{position:relative;width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;padding:0;border-radius:8px;}.dshide-activity-btn:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-activity-btn.active{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-activity-btn.active::before{content:\"\";position:absolute;left:-2px;top:9px;bottom:9px;width:2px;border-radius:0 2px 2px 0;background:var(--dsw-alias-brand-primary);}.dshide-content{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}.dshide-region.rail{flex-direction:column;align-items:center;gap:2px;padding:6px 0;}.dshide-region.rail .dshide-activity-btn{width:36px;height:36px;}.dshide-view{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}.dshide-toolbar{flex:none;display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-title{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}.dshide-select{flex:1;min-width:0;height:28px;border:1px solid var(--dsw-alias-border-l1);border-radius:6px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:0 6px;}.dshide-iconbtn{width:28px;height:28px;flex:none;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;border-radius:6px;padding:0;font-size:13px;}.dshide-iconbtn:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));color:var(--dsw-alias-label-primary);}.dshide-seg{flex:none;display:flex;align-items:center;background:var(--dsw-alias-bg-layer-2,transparent);border-radius:6px;padding:1px;}.dshide-seg-btn{height:24px;padding:0 10px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:13px;border-radius:5px;}.dshide-seg-btn.on{background:var(--dsw-alias-bg-overlay,var(--dsw-alias-bg-layer-1));color:var(--dsw-alias-label-primary);box-shadow:0 1px 2px rgba(0,0,0,.1);}.dshide-scroll{flex:1;min-height:0;overflow:auto;}.dshide-row{display:flex;align-items:center;gap:6px;height:32px;flex:none;padding:0 8px;cursor:pointer;user-select:none;white-space:nowrap;color:var(--dsw-alias-label-primary);}.dshide-row:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-row.selected{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-arrow{width:14px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary);transition:transform .12s ease;}.dshide-arrow.open{transform:rotate(90deg);}.dshide-glyph{flex:none;color:var(--dsw-alias-label-secondary);}.dshide-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:20px;}.dshide-time{flex:none;color:var(--dsw-alias-label-secondary);font-size:12px;}.dshide-dot{flex:none;border-radius:50%;display:inline-block;}.dshide-dot-done{background:var(--dsw-alias-state-success-primary);}.dshide-dot-warning{background:var(--dsw-alias-state-warn-primary);}.dshide-dot-error{background:var(--dsw-alias-state-error-primary);}.dshide-dot-idle{background:var(--dsw-alias-label-secondary);opacity:.35;}.dshide-dot-matrix{flex:none;display:block;}.dshide-dot-cell{fill:var(--dsw-alias-brand-primary);animation:dshide-blink 1s linear infinite;}@keyframes dshide-blink{0%,100%{opacity:.2}50%{opacity:1}}.dshide-wsgroup-title{display:flex;align-items:center;gap:6px;height:34px;flex:none;padding:0 8px;cursor:pointer;user-select:none;font-weight:600;font-size:13px;color:var(--dsw-alias-label-primary);}.dshide-wsgroup-title:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-loading{padding:16px;color:var(--dsw-alias-label-secondary);font-size:14px;}.dshide-empty{padding:16px 14px;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;}.dshide-preview-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--dsw-alias-label-secondary);}.dshide-code{flex:1;min-height:0;overflow:auto;margin:0;padding:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:20px;}.dshide-codeline{display:flex;}.dshide-lineno{flex:none;width:44px;text-align:right;padding-right:12px;color:var(--dsw-alias-label-secondary);user-select:none;opacity:.6;}.dshide-linetext{white-space:pre;}.tok-kw{color:var(--dsw-alias-brand-primary);}.tok-str{color:var(--dsw-alias-state-success-primary);}.tok-com{color:var(--dsw-alias-label-secondary);font-style:italic;opacity:.7;}.tok-num{color:var(--dsw-alias-state-warn-primary);}.tok-bool{color:var(--dsw-alias-brand-primary);}.tok-tag{color:var(--dsw-alias-brand-primary);}.tok-attr{color:var(--dsw-alias-state-warn-primary);}.tok-prop{color:var(--dsw-alias-label-primary);}.tok-json-key{color:var(--dsw-alias-brand-primary);}.tok-md-heading{color:var(--dsw-alias-label-primary);font-weight:700;}.tok-bold{font-weight:700;}.tok-link{color:var(--dsw-alias-brand-primary);text-decoration:underline;}.dshide-row-actions{flex:none;display:none;align-items:center;gap:2px;}.dshide-row:hover .dshide-row-actions,.dshide-wsgroup-title:hover .dshide-row-actions{display:flex;}.dshide-row-btn{flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;border-radius:4px;padding:0;}.dshide-row-btn:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));color:var(--dsw-alias-label-primary);}.dshide-actionbar{flex:none;display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-actionbar-label{flex:none;font-size:14px;color:var(--dsw-alias-label-secondary);}.dshide-actionbar-input{flex:1;min-width:0;height:28px;border:1px solid var(--dsw-alias-brand-primary);border-radius:6px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:0 8px;outline:none;}.dshide-search-box{flex:none;display:flex;align-items:center;gap:4px;padding:8px;}.dshide-search-input{flex:1;min-width:0;height:32px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:0 10px;outline:none;}.dshide-search-input:focus{border-color:var(--dsw-alias-brand-primary);}.dshide-results{flex:1;min-height:0;overflow:auto;}.dshide-result-summary{padding:8px 12px;font-size:13px;color:var(--dsw-alias-label-secondary);border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-match{padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-match:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2));}.dshide-match-path{font-size:13px;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;}.dshide-match-line{display:flex;gap:8px;font-family:ui-monospace,Consolas,monospace;font-size:12px;}.dshide-match-lineno{flex:none;color:var(--dsw-alias-brand-primary);min-width:20px;text-align:right;}.dshide-match-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary);}.dshide-scm{flex:1;min-height:0;overflow:auto;}.dshide-scm-group-title{padding:10px 12px 4px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dsw-alias-label-secondary);}.dshide-scm-status{flex:none;width:14px;text-align:center;font-family:ui-monospace,monospace;font-weight:700;font-size:13px;color:var(--dsw-alias-state-warn-primary);}.dshide-branch{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--dsw-alias-label-primary);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 4px;}.dshide-rename{color:var(--dsw-alias-label-secondary);font-size:12px;}.dshide-diff-line{white-space:pre;padding-left:8px;}.dshide-diff-line.add{background:color-mix(in srgb,var(--dsw-alias-state-success-primary) 12%,transparent);color:var(--dsw-alias-state-success-primary);}.dshide-diff-line.del{background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent);color:var(--dsw-alias-state-error-primary);}.dshide-diff-line.hunk{color:var(--dsw-alias-brand-primary);}.dshide-commit{flex:none;display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-commit-input{flex:1;min-width:0;height:56px;resize:none;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1,transparent);color:var(--dsw-alias-label-primary);font-size:14px;padding:8px;font-family:inherit;outline:none;}.dshide-commit-input:focus{border-color:var(--dsw-alias-brand-primary);}.dshide-commit-btn{flex:none;align-self:flex-start;height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--dsw-alias-brand-primary);color:#fff;font-size:14px;cursor:pointer;}.dshide-commit-btn:disabled{opacity:.4;cursor:default;}.dshide-editor{flex:1;min-height:0;height:100%;display:flex;flex-direction:column;overflow:hidden;width:100%;}.dshide-etabs{flex:none;display:flex;align-items:stretch;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--dsw-alias-border-l1);overflow-x:auto;background:var(--dsw-alias-bg-base);}.dshide-etab{flex:none;display:flex;align-items:center;gap:6px;max-width:200px;height:28px;padding:0 6px 0 10px;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:13px;line-height:26px;}.dshide-etab:hover{background:var(--dsw-alias-interactive-bg-hover);}.dshide-etab.active{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-border-l1);}.dshide-etab-label{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}.dshide-etab-close{width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-tertiary);cursor:pointer;border-radius:4px;padding:0;}.dshide-etab-close:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover);}.dshide-etab-hint{flex:none;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:28px;padding-left:4px;}.dshide-editor-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-tertiary);font-size:13px;}.dshide-editor-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}.dshide-editor-body .dshide-preview-path{flex:none;padding:8px 12px;border-bottom:1px solid var(--dsw-alias-border-l1);}.dshide-editor-body .dshide-code{flex:1;min-height:0;overflow:auto;}\r\n";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=\"@deepseek-ai/dsh-client-ui-ide/styles\"]") === null) {
+			const tag = document.createElement("style");
+			tag.dataset.pluginCss = "@deepseek-ai/dsh-client-ui-ide/styles";
+			tag.textContent = css;
+			document.head.appendChild(tag);
+		}
+		//#endregion
+		//#region src/client/index.ts
 		/** Required services (cordis fiber inject). */
 		const inject = [
 			"slots",
@@ -6308,5 +6318,3 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		return module.exports;
 	}
 });
-
-//# sourceMappingURL=client.js.map

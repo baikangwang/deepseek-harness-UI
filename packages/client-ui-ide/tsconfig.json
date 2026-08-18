@@ -1,42 +1,9 @@
-﻿{
-  "extends": "../../../tsconfig.base.client.json",
+{
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "lib/types"
+    "lib": ["es2024", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": []
   },
-  "include": [
-    "src"
-  ],
-  "references": [
-    {
-      "path": "../../../vendor/cordis"
-    },
-    {
-      "path": "../../runtime-diagnostics/invariants"
-    },
-    {
-      "path": "../locale"
-    },
-    {
-      "path": "../ui-conversation"
-    },
-    {
-      "path": "../ui-sidebar"
-    },
-    {
-      "path": "../web-react"
-    },
-    {
-      "path": "../../typert/protocol"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../runtime"
-    },
-    {
-      "path": "../../host/ide"
-    }
-  ]
+  "include": ["src"]
 }

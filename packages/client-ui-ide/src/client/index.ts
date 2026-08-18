@@ -20,6 +20,8 @@ import { createIdeStore } from './stores.ts'
 import { rpc } from './lib.ts'
 import { IdeSidebar } from './IdeSidebar.tsx'
 import { EditorView } from './EditorView.tsx'
+// Side-effect: inject the global stylesheet (bundled by the standalone tsdown CSS plugin).
+import './styles.module.css'
 
 /** Required services (cordis fiber inject). */
 export const inject = ['slots', 'remote', 'sessions', 'workspaces']
