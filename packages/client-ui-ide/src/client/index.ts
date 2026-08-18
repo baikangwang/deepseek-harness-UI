@@ -95,9 +95,14 @@ export async function apply(ctx: Context): Promise<void> {
   ))
 
   if (hasEditorColumn) {
-    ctx.slots.inject('editor', () => ctx.slots.register(
+    // The `editor` slot is a local ui-layout capability (#6 four-column patch),
+    // absent from the official SlotMap — cast keeps this compiling on clean
+    // official DSH. The runtime probe above decides whether it is registered.
+    // Once the four-column layout lands upstream (refactor-plan-v2.md §2.2),
+    // this can become a typed registration.
+    ctx.slots.inject('editor' as never, () => (ctx.slots.register as never)(
       { name: 'editor', inject: () => injected },
-      EditorView as any,
+      EditorView,
     ))
   } else {
     ctx.slots.inject('conversation.view', () => ctx.slots.register(

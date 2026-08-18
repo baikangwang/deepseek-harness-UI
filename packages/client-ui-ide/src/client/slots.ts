@@ -9,9 +9,11 @@
  */
 
 import type { IdeRemoteFace, RemoteResult } from '@deepseek-ai/dsh-ide/types'
-// Type-only: resolve the SlotMap merges we register into.
+// Type-only: resolve the SlotMap merges we register into. The `editor` slot is
+// deliberately NOT pulled in — it only exists on the local #6 ui-layout patch,
+// and the `editor` registration in apply uses a runtime-probe cast so this
+// package compiles against clean official DSH.
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { IdeTab } from './lib.ts'
 import type { IdeStore } from './stores.ts'

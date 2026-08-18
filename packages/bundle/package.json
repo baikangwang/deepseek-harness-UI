@@ -1,0 +1,23 @@
+{
+  "name": "@deepseek-ai/dsh-harness-ui-bundle",
+  "description": "deepseek-harness-UI 组合包：一键挂载 ide 插件（Host @deepseek-ai/dsh-ide + Client @deepseek-ai/dsh-client-ui-ide）到任意 profile。",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baikangwang/deepseek-harness-UI.git",
+    "directory": "packages/bundle"
+  },
+  "type": "module",
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT"
+}
