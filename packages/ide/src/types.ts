@@ -59,6 +59,28 @@ export interface GitStatusResult {
   error: string
 }
 
+/**
+ * One file's condensed git state for the explorer decorations.
+ * `code` is a single letter: 'C' conflict, 'U' untracked, 'M' modified,
+ * 'A' added (staged), 'D' deleted, 'R' renamed. `staged` marks whether the
+ * change lives in the index (green decoration).
+ */
+export interface GitFileState {
+  code: string
+  staged: boolean
+}
+
+/** `ide.gitStatusMap` result: whole-repo path → state lookup for the tree. */
+export interface GitStatusMapResult {
+  branch: string
+  notRepo: boolean
+  error: string
+  /** relPath (forward slashes, relative to cwd) → condensed state. */
+  files: Record<string, GitFileState>
+  /** Ignored directories (relPath, forward slashes), directory-level aggregate. */
+  ignoredDirs: string[]
+}
+
 /** `ide.gitDiff` result. */
 export interface GitDiffResult {
   stdout: string
@@ -102,6 +124,7 @@ export interface IdeRemoteFace {
   explore(path: string, select?: boolean): Promise<RemoteResult<{ ok: boolean; path: string }>>
   paste(dest: string): Promise<RemoteResult<{ ok: boolean; files: string[]; stderr: string }>>
   gitStatus(cwd: string): Promise<RemoteResult<GitStatusResult>>
+  gitStatusMap(cwd: string): Promise<RemoteResult<GitStatusMapResult>>
   gitDiff(cwd: string, path?: string): Promise<RemoteResult<{ stdout: string; ok: boolean; stderr: string; path: string }>>
   gitStage(cwd: string, paths: string[]): Promise<RemoteResult<{ ok: boolean; stderr: string }>>
   gitUnstage(cwd: string, paths: string[]): Promise<RemoteResult<{ ok: boolean; stderr: string }>>

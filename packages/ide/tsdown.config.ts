@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { defineConfig } from 'tsdown'
 import ts from 'typescript'
 
@@ -41,6 +43,39 @@ const lowerDecorators: {
  * are committed build outputs and only regenerate when the `@Remote` surface
  * changes.
  */
+/** Client bundle identity: the module-loader closure handoff id and the CSS tag. */
+const ID = 'dsh-ide-ui'
+
+const cssInject = (): object => ({
+  name: 'dshide-css-inject',
+  resolveId(source: string, importer?: string) {
+    if (!source.endsWith('.css')) return null
+    const abs = importer ? resolve(dirname(importer), source) : source
+    // `.mjs` suffix keeps the virtual id away from rolldown's css pipeline.
+    return { id: `\0dshide:${abs}.mjs` }
+  },
+  load(id: string) {
+    if (!id.startsWith('\0dshide:') || !id.endsWith('.mjs')) return null
+    const file = id.slice('\0dshide:'.length, -'.mjs'.length)
+    if (file.endsWith('.module.css')) {
+      const css = readFileSync(file, 'utf8')
+      const tagId = `${ID}/styles`
+      return [
+        `const css = ${JSON.stringify(css)};`,
+        `if (typeof document !== 'undefined' && document.querySelector('style[data-plugin-css="${tagId}"]') === null) {`,
+        '  const tag = document.createElement(\'style\');',
+        `  tag.dataset.pluginCss = ${JSON.stringify(tagId)};`,
+        '  tag.textContent = css;',
+        '  document.head.appendChild(tag);',
+        '}',
+      ].join('\n')
+    }
+    // Non-module CSS (katex.min.css etc.): the browser already loads these
+    // through the official web frontend stylesheets, so stub the import out.
+    return 'export default {};'
+  },
+})
+
 export default defineConfig([
   {
     entry: ['src/index.ts'],
@@ -63,5 +98,26 @@ export default defineConfig([
     fixedExtension: false,
     dts: false,
     clean: false,
+  },
+  {
+    name: `${ID}/client`,
+    entry: { client: 'src/client/index.ts' },
+    outDir: 'lib',
+    format: 'cjs',
+    platform: 'browser',
+    target: 'es2024',
+    deps: {
+      neverBundle: ['react', 'react-dom'],
+      alwaysBundle: (id: string) => (id === 'react' || id === 'react-dom' ? false : true),
+    },
+    dts: false,
+    clean: false,
+    plugins: [cssInject()],
+    outputOptions: {
+      entryFileNames: 'client.js',
+      banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(ID)}, factory: (require) => {`,
+      footer: 'return module.exports; } });',
+      intro: 'var module = { exports: {} }; var exports = module.exports;',
+    },
   },
 ])

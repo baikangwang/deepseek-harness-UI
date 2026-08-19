@@ -16,7 +16,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
 import type {
-  GitChange, GitDiffResult, GitStatusResult, ListDirResult, ReadTextResult,
+  GitChange, GitDiffResult, GitFileState, GitStatusMapResult, GitStatusResult, ListDirResult, ReadTextResult,
   RootsResult, SearchMatch, SearchResult, WorkspaceRef,
 } from './types.ts'
 // Type-only: resolve the injected Host service augmentations
@@ -199,6 +199,51 @@ export class IdeService extends TypertRemoteService {
       return { branch: branch.stdout.trim(), changes: [], notRepo: false, error: (st.stderr || '').trim() }
     }
     return { branch: branch.stdout.trim(), changes: this.parseStatus(st.stdout), notRepo: false, error: '' }
+  }
+
+  @Remote('gitStatusMap')
+  async gitStatusMap(cwd: string): Promise<GitStatusMapResult> {
+    if (cwd === '') return { branch: '', files: {}, ignoredDirs: [], notRepo: true, error: 'no workspace directory' }
+    const branch = await this.git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD'])
+    if (!branch.ok) {
+      return { branch: '', files: {}, ignoredDirs: [], notRepo: true, error: (branch.stderr || '').trim() || 'not a git repository' }
+    }
+    const st = await this.git(cwd, ['status', '--porcelain=v1', '-z', '--untracked-files=all'])
+    const ig = await this.git(cwd, ['-c', 'core.quotepath=false', 'status', '--porcelain=v1', '--ignored'])
+    const files: Record<string, GitFileState> = {}
+    if (st.ok) {
+      for (const c of this.parseStatus(st.stdout)) files[c.path] = this.condense(c)
+    }
+    const ignoredDirs = this.parseIgnored(ig.ok ? ig.stdout : '')
+    return { branch: branch.stdout.trim(), files, ignoredDirs, notRepo: false, error: '' }
+  }
+
+  /** Condense a porcelain change record into the explorer decoration state. */
+  private condense(c: GitChange): GitFileState {
+    const [x, y] = [c.staged, c.unstaged]
+    const conflict = c.xy.includes('U') || c.xy === 'AA' || c.xy === 'DD'
+    if (conflict) return { code: 'C', staged: false }
+    if (c.xy === '??') return { code: 'U', staged: false }
+    if (x && x !== ' ') return { code: x, staged: true }
+    if (y && y !== ' ') return { code: y, staged: false }
+    return { code: 'M', staged: false }
+  }
+
+  /** Parse `git status --porcelain=v1 --ignored` (directory-aggregated, capped). */
+  private parseIgnored(stdout: string): string[] {
+    const out: string[] = []
+    const MAX = 3000
+    for (const line of stdout.split(/\r?\n/)) {
+      if (out.length >= MAX) break
+      const t = line.trim()
+      if (!t.startsWith('!! ')) continue
+      let p = t.slice(3).trim()
+      if (p === '') continue
+      // porcelain normal mode marks whole-ignored directories with a trailing '/'
+      if (p.endsWith('/')) p = p.slice(0, -1)
+      out.push(p)
+    }
+    return out
   }
 
   private parseStatus(stdout: string): GitChange[] {

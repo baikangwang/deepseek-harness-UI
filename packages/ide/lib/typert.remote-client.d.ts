@@ -3,7 +3,7 @@ import type {
   RemoteResult,
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
-import type { GitDiffResult, GitStatusResult, ListDirResult, ReadTextResult, RootsResult, SearchResult } from 'dsh-ide-ui/types'
+import type { GitDiffResult, GitStatusMapResult, GitStatusResult, ListDirResult, ReadTextResult, RootsResult, SearchResult } from 'dsh-ide-ui/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$696465 {
@@ -15,6 +15,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     gitStage: (cwd: string, paths: string[]) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     gitStageAll: (cwd: string) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     gitStatus: (cwd: string) => Promise<RemoteResult<GitStatusResult>>
+    gitStatusMap: (cwd: string) => Promise<RemoteResult<GitStatusMapResult>>
     gitUnstage: (cwd: string, paths: string[]) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     gitUnstageAll: (cwd: string) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     listDir: (path: string) => Promise<RemoteResult<ListDirResult>>
@@ -35,6 +36,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'ide/gitStage': (cwd: string, paths: string[]) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     'ide/gitStageAll': (cwd: string) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     'ide/gitStatus': (cwd: string) => Promise<RemoteResult<GitStatusResult>>
+    'ide/gitStatusMap': (cwd: string) => Promise<RemoteResult<GitStatusMapResult>>
     'ide/gitUnstage': (cwd: string, paths: string[]) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     'ide/gitUnstageAll': (cwd: string) => Promise<RemoteResult<{ ok: boolean; stderr: string; }>>
     'ide/listDir': (path: string) => Promise<RemoteResult<ListDirResult>>

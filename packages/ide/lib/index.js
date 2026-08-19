@@ -54,6 +54,7 @@ let IdeService = (() => {
 	let _explore_decorators;
 	let _paste_decorators;
 	let _gitStatus_decorators;
+	let _gitStatusMap_decorators;
 	let _gitDiff_decorators;
 	let _gitStage_decorators;
 	let _gitUnstage_decorators;
@@ -75,6 +76,7 @@ let IdeService = (() => {
 			_explore_decorators = [Remote("explore")];
 			_paste_decorators = [Remote("paste")];
 			_gitStatus_decorators = [Remote("gitStatus")];
+			_gitStatusMap_decorators = [Remote("gitStatusMap")];
 			_gitDiff_decorators = [Remote("gitDiff")];
 			_gitStage_decorators = [Remote("gitStage")];
 			_gitUnstage_decorators = [Remote("gitUnstage")];
@@ -190,6 +192,17 @@ let IdeService = (() => {
 				access: {
 					has: (obj) => "gitStatus" in obj,
 					get: (obj) => obj.gitStatus
+				},
+				metadata: _metadata
+			}, null, _instanceExtraInitializers);
+			__esDecorate(this, null, _gitStatusMap_decorators, {
+				kind: "method",
+				name: "gitStatusMap",
+				static: false,
+				private: false,
+				access: {
+					has: (obj) => "gitStatusMap" in obj,
+					get: (obj) => obj.gitStatusMap
 				},
 				metadata: _metadata
 			}, null, _instanceExtraInitializers);
@@ -501,6 +514,89 @@ let IdeService = (() => {
 				notRepo: false,
 				error: ""
 			};
+		}
+		async gitStatusMap(cwd) {
+			if (cwd === "") return {
+				branch: "",
+				files: {},
+				ignoredDirs: [],
+				notRepo: true,
+				error: "no workspace directory"
+			};
+			const branch = await this.git(cwd, [
+				"rev-parse",
+				"--abbrev-ref",
+				"HEAD"
+			]);
+			if (!branch.ok) return {
+				branch: "",
+				files: {},
+				ignoredDirs: [],
+				notRepo: true,
+				error: (branch.stderr || "").trim() || "not a git repository"
+			};
+			const st = await this.git(cwd, [
+				"status",
+				"--porcelain=v1",
+				"-z",
+				"--untracked-files=all"
+			]);
+			const ig = await this.git(cwd, [
+				"-c",
+				"core.quotepath=false",
+				"status",
+				"--porcelain=v1",
+				"--ignored"
+			]);
+			const files = {};
+			if (st.ok) for (const c of this.parseStatus(st.stdout)) files[c.path] = this.condense(c);
+			const ignoredDirs = this.parseIgnored(ig.ok ? ig.stdout : "");
+			return {
+				branch: branch.stdout.trim(),
+				files,
+				ignoredDirs,
+				notRepo: false,
+				error: ""
+			};
+		}
+		/** Condense a porcelain change record into the explorer decoration state. */
+		condense(c) {
+			const [x, y] = [c.staged, c.unstaged];
+			if (c.xy.includes("U") || c.xy === "AA" || c.xy === "DD") return {
+				code: "C",
+				staged: false
+			};
+			if (c.xy === "??") return {
+				code: "U",
+				staged: false
+			};
+			if (x && x !== " ") return {
+				code: x,
+				staged: true
+			};
+			if (y && y !== " ") return {
+				code: y,
+				staged: false
+			};
+			return {
+				code: "M",
+				staged: false
+			};
+		}
+		/** Parse `git status --porcelain=v1 --ignored` (directory-aggregated, capped). */
+		parseIgnored(stdout) {
+			const out = [];
+			const MAX = 3e3;
+			for (const line of stdout.split(/\r?\n/)) {
+				if (out.length >= MAX) break;
+				const t = line.trim();
+				if (!t.startsWith("!! ")) continue;
+				let p = t.slice(3).trim();
+				if (p === "") continue;
+				if (p.endsWith("/")) p = p.slice(0, -1);
+				out.push(p);
+			}
+			return out;
 		}
 		parseStatus(stdout) {
 			const out = [];

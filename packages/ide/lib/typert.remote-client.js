@@ -60,6 +60,17 @@ const _dsh_ide_ui_ide_gitStatus_result$schema = z.object({
   'notRepo': z.boolean(),
   'error': z.string(),
 })
+const _dsh_ide_ui_ide_gitStatusMap_parameter_0$schema = z.string()
+const _dsh_ide_ui_ide_gitStatusMap_result$schema = z.object({
+  'branch': z.string(),
+  'files': z.record(z.object({
+  'code': z.string(),
+  'staged': z.boolean(),
+})),
+  'ignoredDirs': z.array(z.string()),
+  'notRepo': z.boolean(),
+  'error': z.string(),
+})
 const _dsh_ide_ui_ide_gitUnstage_parameter_0$schema = z.string()
 const _dsh_ide_ui_ide_gitUnstage_parameter_1$schema = z.array(z.string())
 const _dsh_ide_ui_ide_gitUnstage_result$schema = z.object({
@@ -397,6 +408,31 @@ export const TYPERT_REMOTE = {
         mode: 'strict',
         typeSymbol: 'dsh-ide-ui/types#GitStatusResult',
         schema: _dsh_ide_ui_ide_gitStatus_result$schema,
+      },
+      sourceLocation: {"file":"packages/host/ide/src/index.ts","line":191,"column":9},
+    },
+    {
+      id: 'dsh-ide-ui#ide/gitStatusMap',
+      service: 'ide',
+      namespace: 'ide',
+      method: 'gitStatusMap',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'cwd',
+          wire: 'cwd',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: 'dsh-ide-ui#ide/gitStatusMap:cwd',
+            schema: _dsh_ide_ui_ide_gitStatusMap_parameter_0$schema,
+          },
+        },
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: 'dsh-ide-ui/types#GitStatusMapResult',
+        schema: _dsh_ide_ui_ide_gitStatusMap_result$schema,
       },
       sourceLocation: {"file":"packages/host/ide/src/index.ts","line":191,"column":9},
     },

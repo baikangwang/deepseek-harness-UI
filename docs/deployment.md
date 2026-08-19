@@ -1,117 +1,110 @@
 # 本地部署与验证（deployment）
 
-> 目标：把 `dsh-ide-ui` / `dsh-client-ide-ui`（社区非官方插件）安装到本地 DSH profile 并验证功能。
-> 适用：`dsh` 0.1.0-rc.7，Node 22.19+ / 24+。
+> 把 `dsh-ide-ui`（社区非官方插件，单包双面）安装到本地 DSH profile 并验证。
+> 适用：DSH web 0.1.0-rc.7+，Node 22.19+ / 24+，Windows（PowerShell）。
 
-## 0. 前置环境
+## 0. 产物与目标
 
-| 项 | 说明 |
-|---|---|
-| `dsh` CLI | `npx @deepseek-ai/dsh web`，或把 npx 缓存 `.bin` 加入 PATH 后直接 `dsh` |
-| `pnpm` | 若无全局 pnpm，用 `corepack pnpm`；或建 shim（见下） |
-| tarball | `dist/dsh-ide-ui-0.1.0-rc.7.tgz`、`dist/dsh-client-ide-ui-0.1.0-rc.7.tgz`、`dist/dsh-ide-ui-bundle-0.1.0-rc.7.tgz` |
+- 构建产物：`dist/dsh-ide-ui-<version>.tgz`（含嵌入字体的 client bundle，约 290KB）。
+- 安装目标：`C:\Users\<你>\.dsh\profiles\web\node_modules\dsh-ide-ui`（**真实目录**）。
+- 激活方式：profile `cordis.patch.yml` 单行 `- id: ide-ui / name: 'dsh-ide-ui'`。
+- profile `package.json` 依赖：`"dsh-ide-ui": "file:D:/…/dist/dsh-ide-ui-<version>.tgz"`。
 
-> **为什么本地验证不装 bundle**：`dsh-ide-ui-bundle` 的 `dependencies` 指向 `dsh-ide-ui@^0.1.0-rc.7`，未发布到 npm 前 `dsh plugin add` 会在 registry 解析 404。本地验证改为：装两个包 tarball + 手动写 profile patch（效果与 bundle 一致）。
+> **不要**用 `pnpm add` 直接安装 core 包：DSH 通过
+> `healProfilesModuleFallback` 在 `profiles/node_modules/@deepseek-ai` 提供
+> junction 镜像（195 个，`autoInstallPeers: false` 是有意为之）。安装本插件的
+> peer 依赖（react/react-dom）时注意不要引入真实 core 包。
 
-### pnpm shim（无全局 pnpm 时）
+## 1. 一次构建 + 打包（每次改代码）
 
-```powershell
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.dsh\dsh-shims" | Out-Null
-'@echo off
-corepack pnpm %*' | Out-File -Encoding ascii "$env:USERPROFILE\.dsh\dsh-shims\pnpm.cmd"
-$env:PATH = "$env:USERPROFILE\.dsh\dsh-shims;$env:PATH"
-```
-
-## 1. 安装两个包到 profile
+在仓库根 `D:\working\projects\deepseek-harness-UI`：
 
 ```powershell
-$dsh = "C:\Users\wangbaikang\AppData\Local\npm-cache\_npx\<hash>\node_modules\.bin\dsh.cmd"  # 换成你的 npx 缓存路径
-
-& $dsh plugin --profile web add `
-  D:\working\projects\deepseek-harness-UI\dist\dsh-ide-ui-0.1.0-rc.7.tgz `
-  D:\working\projects\deepseek-harness-UI\dist\dsh-client-ide-ui-0.1.0-rc.7.tgz
-```
-
-预期：两个包以 `file:` 依赖装入 `~/.dsh/profiles/web/package.json`；输出两条
-`dsh: warning: ... declares no dsh.bundle — installed as a plain dependency`（正常，
-无 `dsh.bundle` 的包不自动成为 layer，由下一步手动 patch 激活）。
-
-> 若之前装过旧版本，pnpm 可能报 `Already up to date` 不替换文件——先 remove 再 add：
-> `& $dsh plugin --profile web remove dsh-ide-ui` 后重装。
-
-## 2. 补 peer 依赖（必须）
-
-profile 的 pnpm 默认 `autoInstallPeers: false`，peer 依赖不会自动装进 profile 的
-`node_modules`。虽然 dsh 的 `~/.dsh/profiles/node_modules` 兜底镜像通常能解析，但
-显式声明才稳妥：
-
-```powershell
-Push-Location "$env:USERPROFILE\.dsh\profiles\web"
-corepack pnpm add "@deepseek-ai/cordis@4.0.1" "@deepseek-ai/dsh-invariants@0.1.0-rc.7" `
-  "@deepseek-ai/dsh-typert-protocol@0.1.0-rc.7" "@deepseek-ai/dsh-api-gateway@0.1.0-rc.7" `
-  "@deepseek-ai/dsh-api-remotes@0.1.0-rc.7" "@deepseek-ai/dsh-client-runtime@0.1.0-rc.7" "react@18.3.1"
+# 1) 类型检查 + 构建（packages/ide 下）
+Push-Location packages/ide
+npx tsc --noEmit                      # 必须 0 错误
+& .\node_modules\.bin\tsdown.cmd      # 产出 lib/index.js + lib/client.js + lib/invariant.js
 Pop-Location
+
+# 2) bump 版本（rc.x → rc.y）
+#    编辑 packages/ide/package.json 的 "version"（注意：不要用会写 BOM 的方式保存，
+#    ConvertTo-Json 后请用 UTF8Encoding($false) 写回，tsdown 读 package.json 遇 BOM 会崩）
+
+# 3) 打包（npm pack 需要临时 cache）
+npm pack --pack-destination D:\working\projects\deepseek-harness-UI\dist `
+  --cache D:\working\projects\deepseek-harness-UI\.npm-cache-tmp   # 在 packages/ide 下执行
 ```
 
-## 3. 写 profile patch 激活插件行
-
-编辑 `~/.dsh/profiles/web/cordis.patch.yml`（把 `[]` 换成）：
-
-```yaml
-- insert:
-    - id: ide-ui
-      name: 'dsh-ide-ui'
-    - id: ui-ide
-      name: 'dsh-client-ide-ui'
-```
-
-行 id 与包名必须与 tarball 的 `package.json`/`exports` 完全一致（`dsh-ide-ui` 提供
-`/remote`，`dsh-client-ide-ui` 声明 `dsh.client`），modules 子系统扫描该行即可把
-client bundle 纳入浏览器 roster。
-
-## 4. 静态验证组合树（不启动）
+## 2. 部署到 profile
 
 ```powershell
-& $dsh --profile web --dump-config 2>&1 | Select-String -Pattern 'ide-ui|ui-ide|Cannot find|SyntaxError'
+$tmp  = "D:\working\projects\deepseek-harness-UI\.tmp-deploy"
+$dst  = "C:\Users\wangbaikang\.dsh\profiles\web\node_modules\dsh-ide-ui"
+$tgz  = "D:\working\projects\deepseek-harness-UI\dist\dsh-ide-ui-<version>.tgz"
+
+if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+New-Item -ItemType Directory -Path $tmp | Out-Null
+tar -xf $tgz -C $tmp
+
+Remove-Item "$dst\lib" -Recurse -Force; Remove-Item "$dst\package.json" -Force
+Copy-Item "$tmp\package\lib" "$dst\lib" -Recurse -Force
+Copy-Item "$tmp\package\package.json" "$dst\package.json" -Force
+Remove-Item $tmp -Recurse -Force
+
+# 更新 profile 依赖指向新 tgz
+$p = "C:\Users\wangbaikang\.dsh\profiles\web\package.json"
+$j = Get-Content $p -Raw | ConvertFrom-Json
+$j.dependencies.'dsh-ide-ui' = "file:D:/working/projects/deepseek-harness-UI/dist/dsh-ide-ui-<version>.tgz"
+[System.IO.File]::WriteAllText($p, ($j | ConvertTo-Json -Depth 20), (New-Object System.Text.UTF8Encoding($false)))
 ```
 
-预期：出现 `- id: ide-ui` / `- id: ui-ide` 两行，无 `Cannot find package` / `SyntaxError`。
-
-## 5. 重启 dsh web 并浏览器验证
-
-**必须完全重启进程**（patch 行在启动时组合，刷新页面不生效）。若有旧实例先结束
-（`Get-NetTCPConnection -LocalPort 3080` 找到 PID 后结束），再：
+## 3. 验证（不启动）
 
 ```powershell
-& $dsh --profile web
+& "D:\working\projects\deepseek-harness-UI\scripts\verify-ide-plugin.ps1"
 ```
 
-浏览器打开 http://127.0.0.1:3080：
+28 项检查，全部 `[OK]` + `ALL PASSED` 才允许重启。覆盖：patch 行、host 可加载
+并注册 `IdeService`、client bundle 特征（`ctx.get("remote.ide")`、`priority: -1`、
+markdown / KaTeX / 文件图标 / 会话持久化 / 预览开关）、版本号、无真实 core 包、
+junction ≥ 190、以及近期修复回归项（CSS 转义→Unicode 解码、语言 ID 扩展名展开、
+tsconfig.json 走 json 图标、20px 图标）。
+
+## 4. 重启生效
+
+- **Host 面 / 版本变更**：必须完全重启 dsh web（patch 行在启动时组合）。
+  若 3080 被残留进程占用：`Get-NetTCPConnection -LocalPort 3080` 找到 PID 后
+  `Stop-Process`，再 `npx @deepseek-ai/dsh web --port 3080`（或你的启动方式）。
+- **Client 面改动**：刷新浏览器页面即可（`client.js` 静态服务），
+  无需重启进程。
+
+## 5. 验证点
 
 | # | 验证点 | 预期 |
 |---|---|---|
 | 1 | 左侧栏 | logo + 活动栏（资源管理器→搜索→源代码管理→会话管理）+ 内容区 |
-| 2 | 资源管理器 | 工作区目录树可展开、隐藏文件开关、只读预览带行号 |
-| 3 | 搜索 | 关键词出结果（rg 快路径或回退扫描），点击跳预览 |
-| 4 | 源代码管理 | 分支 + 三组变更；在 git 仓库目录操作 stage/unstage/diff |
-| 5 | 会话管理 | 会话列表（状态点/标题/工作区/相对时间），点击打开 |
-| 6 | 编辑器 | 打开文件后中栏出现「编辑器」标签页（`conversation.view`） |
-| 7 | 控制台 | F12 无 `slot "X" is already declared`、无 RPC 报错 |
+| 2 | 资源管理器 | 目录树可展开、隐藏文件开关、**.ts/.js/.json/.md/.py 显示各自的彩色图标（20px）**；git 仓库内文件/目录显示状态点（橙=已修改、灰=未跟踪、绿=已暂存、红=冲突），忽略项半透明 |
+| 3 | 搜索 | 关键词出结果，点击跳预览 |
+| 4 | 源代码管理 | 分支 + 三组变更，stage/unstage/diff/commit |
+| 5 | 会话管理 | 原生对齐的会话/项目行；展开状态刷新后保留 |
+| 6 | 编辑器 | 打开 `.md` 后中栏「编辑器」标签页，默认预览模式渲染 GFM 表格 / KaTeX |
+| 7 | 控制台 | F12 无 `slot already has a registration`、无 RPC 报错 |
 
 ## 6. 常见问题
 
 | 现象 | 原因 / 处理 |
 |---|---|
-| `Invalid or unexpected token` at `@Remote(...)` | host 包 `lib/index.js` 残留装饰器语法。已修复：`tsdown.config.ts` 的 transform 插件用 `typescript.transpileModule` 降级（`__esDecorate`）。确认 tarball 为最新（`node --check` 通过、含 `__esDecorate`）。 |
-| `No anonymous write access` 无法 push | 配置凭据：`git config credential.helper wincred` + `git config http.proxy http://127.0.0.1:10808`（本地代理），沙箱内需完整访问权限执行 git。 |
-| `dsh` 不是内部或外部命令 | dsh 只在 npx 缓存 `.bin`，不在 PATH。用全路径或 `npm i -g @deepseek-ai/dsh@0.1.0-rc.7`。 |
-| `EADDRINUSE` | 3080 端口被残留进程占用，先杀旧进程再启动。 |
-| 装了新 tarball 但行为没变 | pnpm `Already up to date` 未替换——`dsh plugin remove` 后重装，或删除 profile 里对应 `node_modules` 目录重装。 |
+| `Unexpected token '\uFEFF' … not valid JSON`（tsdown 崩） | `package.json` 被带 BOM 保存。用 `UTF8Encoding($false)` 重写。 |
+| `EADDRINUSE 127.0.0.1:3080` | 3080 被残留 node 进程占用，先杀再启。 |
+| 图标显示字面 `\E0??` | 旧版 bug（CSS 转义未解码）。更新到 rc.16+ 并刷新。 |
+| 所有文件同一图标 | 旧版生成脚本把映射全写成 `_`。更新到 rc.17+。 |
+| 常见语言仍是默认图标 | 语言 ID 未展开成扩展名。更新到 rc.18+。 |
+| 装了新 tgz 但行为没变 | 确认 profile `node_modules/dsh-ide-ui` 的 `package.json` 版本号已是新版；浏览器半强制刷新（Ctrl+F5）。 |
+| `Insufficient tool messages following tool_calls` | 历史会话被污染（重复 core 包实例导致）。**不要复用旧会话测试**，新建会话。 |
+| `slot "sidebar.workspaces" already has a registration at priority 0` | client bundle 缺 `priority: -1`，确认是最新构建。 |
 
-## 7. 打包产物清单
+## 7. 回归注意
 
-| tarball | 内容 |
-|---|---|
-| `dsh-ide-ui-0.1.0-rc.7.tgz` | Host 半：`ide` Remote（fs/git/search），Typert 产物已降级装饰器 |
-| `dsh-client-ide-ui-0.1.0-rc.7.tgz` | Client 半：侧栏 + 编辑器标签页 |
-| `dsh-ide-ui-bundle-0.1.0-rc.7.tgz` | 组合层：`cordis.patch.yml`（发布到 npm 后可直接 `dsh plugin add`） |
+- 测试请在**新会话**进行；会话 `fc895164` 历史已损坏，不可复用。
+- 会话管理视图的展开状态存 `localStorage`（`dshide.session.expanded.v1`），
+  想重置可清该键。

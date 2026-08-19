@@ -15,7 +15,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis';
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
-import type { GitDiffResult, GitStatusResult, ListDirResult, ReadTextResult, RootsResult, SearchResult } from './types.ts';
+import type { GitDiffResult, GitStatusMapResult, GitStatusResult, ListDirResult, ReadTextResult, RootsResult, SearchResult } from './types.ts';
 /** Remote-only service exposing the DSH Code file / git / search surface. */
 export declare class IdeService extends TypertRemoteService {
     static inject: string[];
@@ -59,6 +59,11 @@ export declare class IdeService extends TypertRemoteService {
         stderr: string;
     }>;
     gitStatus(cwd: string): Promise<GitStatusResult>;
+    gitStatusMap(cwd: string): Promise<GitStatusMapResult>;
+    /** Condense a porcelain change record into the explorer decoration state. */
+    private condense;
+    /** Parse `git status --porcelain=v1 --ignored` (directory-aggregated, capped). */
+    private parseIgnored;
     private parseStatus;
     gitDiff(cwd: string, path?: string): Promise<GitDiffResult>;
     gitStage(cwd: string, paths: string[]): Promise<{
@@ -90,4 +95,3 @@ export declare class IdeService extends TypertRemoteService {
     search(cwd: string, query: string, caseSensitive: boolean): Promise<SearchResult>;
 }
 export default IdeService;
-//# sourceMappingURL=index.d.ts.map
