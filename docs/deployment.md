@@ -107,7 +107,7 @@ $j.dependencies.'dsh-ide-ui' = "file:D:/working/projects/deepseek-harness-UI/dis
 & "D:\working\projects\deepseek-harness-UI\scripts\verify-ide-plugin.ps1"
 ```
 
-28 项检查，全部 `[OK]` + `ALL PASSED` 才允许重启。覆盖：patch 行、host 可加载
+30 项检查，全部 `[OK]` + `ALL PASSED` 才允许重启。覆盖：patch 行、host 可加载
 并注册 `IdeService`、client bundle 特征（`ctx.get("remote.ide")`、`priority: -1`、
 markdown / KaTeX / 文件图标 / 会话持久化 / 预览开关）、版本号、无真实 core 包、
 junction ≥ 190、以及近期修复回归项（CSS 转义→Unicode 解码、语言 ID 扩展名展开、
@@ -146,7 +146,33 @@ tsconfig.json 走 json 图标、20px 图标）。
 | `Insufficient tool messages following tool_calls` | 历史会话被污染（重复 core 包实例导致）。**不要复用旧会话测试**，新建会话。 |
 | `slot "sidebar.workspaces" already has a registration at priority 0` | client bundle 缺 `priority: -1`，确认是最新构建。 |
 
-## 8. 回归注意
+## 8. 自动发布（CI/CD，GitHub Actions）
+
+仓库内置 `.github/workflows/release.yml`，**打 tag 即自动发布**，无需在发布机上
+做任何构建：
+
+```powershell
+# 1. 本地 bump 版本并提交
+#    （改 packages/ide/package.json 的 version，如 0.1.0-rc.20）
+# 2. 打 tag（必须 v 前缀，且与 package.json version 一致）
+git tag v0.1.0-rc.20
+git push origin v0.1.0-rc.20
+```
+
+CI（ubuntu，pnpm 9 + Node 22）自动执行：
+
+1. `pnpm install --frozen-lockfile` → `pnpm typecheck` → `pnpm build`（tsdown）；
+2. **tag 与 package.json 版本一致性校验**（不一致直接失败）；
+3. `npm pack` → `dist/dsh-ide-ui-<version>.tgz`；
+4. `scripts/build-offline-package.ps1`（pwsh）→ `dist/dsh-ide-ui-offline-<version>.zip`；
+5. 创建 GitHub Release 并挂载两个产物（已存在则更新覆盖）；
+6. **可选 npm publish**：在仓库 Settings → Secrets and variables → Actions
+   配置 `NPM_TOKEN`（npm registry 的自动化 token，需对 `dsh-ide-ui` 包名有
+   发布权限）后自动执行；未配置则跳过，不影响 Release。
+
+目标机从 Release 页面下载 `-offline-<version>.zip` 即是最新安装包。
+
+## 9. 回归注意
 
 - 测试请在**新会话**进行；会话 `fc895164` 历史已损坏，不可复用。
 - 会话管理视图的展开状态存 `localStorage`（`dshide.session.expanded.v1`），

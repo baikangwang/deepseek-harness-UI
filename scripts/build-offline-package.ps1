@@ -14,7 +14,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $dist = Join-Path $root 'dist'
-$offlineDir = Join-Path $root 'scripts\offline'
+# forward slashes so pwsh 7 on Linux (CI runner) resolves it too
+$offlineDir = Join-Path $root 'scripts/offline'
 
 if (-not $Version) {
   $Version = (Get-Content (Join-Path $root 'packages\ide\package.json') -Raw | ConvertFrom-Json).version

@@ -1,0 +1,109 @@
+# release.yml - automated package release for dsh-ide-ui
+#
+# Trigger: push a tag v<semver> (e.g. v0.1.0-rc.19) -> build + publish.
+#   - runs typecheck + build (tsdown)
+#   - npm pack -> dist/dsh-ide-ui-<version>.tgz
+#   - assembles the offline installer zip (dist/dsh-ide-ui-offline-<version>.zip)
+#   - creates a GitHub Release with both artifacts attached
+#   - optionally publishes to npm when the NPM_TOKEN secret is configured
+#
+# No build environment is needed on the target machine: download the offline
+# zip from the Release and run install-dsh-ide-ui.ps1 (see docs/deployment.md).
+#
+# Secrets:
+#   NPM_TOKEN  (optional) npm registry auth token for `npm publish`. Without
+#              it the workflow still builds the artifacts and the Release.
+
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (package.json must already carry it; leave empty to use the package.json version)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build (tsdown)
+        run: pnpm build
+
+      - name: Assert tag matches package.json version
+        run: |
+          PKG_VERSION="$(node -p "require('./packages/ide/package.json').version")"
+          echo "package.json version: $PKG_VERSION"
+          if [ -n "${{ github.ref_type }}" ] && [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            echo "tag version: $TAG_VERSION"
+            if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+              echo "::error::tag ($TAG_VERSION) != package.json version ($PKG_VERSION). Bump packages/ide/package.json first, then re-tag."
+              exit 1
+            fi
+          fi
+
+      - name: npm pack
+        run: |
+          mkdir -p dist
+          (cd packages/ide && npm pack --pack-destination ../../dist)
+          ls -la dist/
+
+      - name: Assemble offline installer zip
+        shell: pwsh
+        run: |
+          ./scripts/build-offline-package.ps1
+          Get-ChildItem dist | Select-Object Name, Length
+
+      - name: Create / update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.tgz dist/*-offline-*.zip \
+              --repo "${{ github.repository }}" --clobber
+            echo "Release $TAG updated with artifacts."
+          else
+            gh release create "$TAG" dist/*.tgz dist/*-offline-*.zip \
+              --repo "${{ github.repository }}" \
+              --title "$TAG" \
+              --notes "dsh-ide-ui $TAG — 预编译插件包（.tgz）与无编译环境安装包（-offline-.zip）。
+                    安装见 docs/deployment.md：解压 zip → 运行 install-dsh-ide-ui.ps1 → 重启 dsh web。"
+            echo "Release $TAG created."
+          fi
+
+      - name: Publish to npm (optional, needs NPM_TOKEN)
+        if: env.NPM_TOKEN != ''
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          cd packages/ide
+          npm publish --access public
