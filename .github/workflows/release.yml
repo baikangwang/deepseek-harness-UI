@@ -1,14 +1,21 @@
-# release.yml - automated package release for dsh-ide-ui
+# release.yml - automated package release for dsh-ide-ui, gated by approval.
 #
-# Trigger: push a tag v<semver> (e.g. v0.1.0-rc.19) -> build + publish.
-#   - runs typecheck + build (tsdown)
-#   - npm pack -> dist/dsh-ide-ui-<version>.tgz
-#   - assembles the offline installer zip (dist/dsh-ide-ui-offline-<version>.zip)
-#   - creates a GitHub Release with both artifacts attached
-#   - optionally publishes to npm when the NPM_TOKEN secret is configured
+# Pipeline:
+#   push master (or manual Run workflow)  ->  build job runs automatically
+#     (install + typecheck + build + emit version)  -- NO publishing happens
+#   publish job waits for HUMAN APPROVAL on the `release` environment
+#     (Settings -> Environments -> release -> Required reviewers)
+#     -> on approve: npm pack + offline zip + auto-tag v<semver> (if absent)
+#        + GitHub Release with both artifacts + optional npm publish.
 #
-# No build environment is needed on the target machine: download the offline
-# zip from the Release and run install-dsh-ide-ui.ps1 (see docs/deployment.md).
+# So every push is built and packaged automatically, but nothing is released
+# (no tag, no Release, no npm) until you approve in the Actions UI.
+#
+# Tag triggers still route through the same approval gate: push a tag v* only
+# when you want to re-release an existing version.
+#
+# The auto-created tag uses the GITHUB_TOKEN, whose pushes do NOT re-trigger
+# workflows, so there is no infinite loop.
 #
 # Secrets:
 #   NPM_TOKEN  (optional) npm registry auth token for `npm publish`. Without
@@ -18,27 +25,23 @@ name: release
 
 on:
   push:
+    branches:
+      - master
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to build (package.json must already carry it; leave empty to use the package.json version)'
-        required: false
 
 permissions:
   contents: write
 
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
-    # Job-level env: visible to step `if` conditions (step env is not), and
-    # secrets may not be referenced directly inside `if` expressions.
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    outputs:
+      version: ${{ steps.pkg.outputs.version }}
     steps:
       - name: Checkout
-        # v5: uses the Node 24 runner (v4 targets Node 20, deprecated 2025-09)
+        # v5: Node 24 runner (v4 targets Node 20, deprecated 2025-09)
         uses: actions/checkout@v5
 
       - name: Setup pnpm
@@ -62,21 +65,47 @@ jobs:
       - name: Build (tsdown)
         run: pnpm build
 
-      - name: Assert tag matches package.json version
+      - name: Emit package version
+        id: pkg
         run: |
           PKG_VERSION="$(node -p "require('./packages/ide/package.json').version")"
-          echo "package.json version: $PKG_VERSION"
-          if [ -n "${{ github.ref_type }}" ] && [ "${{ github.ref_type }}" = "tag" ]; then
-            TAG_VERSION="${GITHUB_REF_NAME#v}"
-            echo "tag version: $TAG_VERSION"
-            if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-              echo "::error::tag ($TAG_VERSION) != package.json version ($PKG_VERSION). Bump packages/ide/package.json first, then re-tag."
-              exit 1
-            fi
+          echo "version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "package.json version: ${PKG_VERSION}"
+
+      - name: Assert tag matches package.json version (tag triggers only)
+        if: github.ref_type == 'tag'
+        run: |
+          PKG_VERSION="${{ steps.pkg.outputs.version }}"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "tag version: ${TAG_VERSION}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::tag (${TAG_VERSION}) != package.json version (${PKG_VERSION}). Bump packages/ide/package.json first, then re-tag."
+            exit 1
           fi
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Human gate: the job waits for approval from the `release` environment's
+    # required reviewers before ANY of these steps run.
+    environment: release
+    # Job-level env: visible to step `if` conditions (step env is not), and
+    # secrets may not be referenced directly inside `if` expressions.
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
 
       - name: npm pack
         run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          echo "Releasing version: ${VERSION}"
           mkdir -p dist
           (cd packages/ide && npm pack --pack-destination ../../dist)
           ls -la dist/
@@ -87,22 +116,37 @@ jobs:
           ./scripts/build-offline-package.ps1
           Get-ChildItem dist | Select-Object Name, Length
 
+      - name: Auto-tag v<version> (create + push if absent)
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists — skipping creation."
+          else
+            git tag "${TAG}"
+            git push origin "${TAG}"
+            echo "Created and pushed tag ${TAG}."
+          fi
+          echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
       - name: Create / update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${TAG}"
           if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/*.tgz dist/*-offline-*.zip \
               --repo "${{ github.repository }}" --clobber
-            echo "Release $TAG updated with artifacts."
+            echo "Release ${TAG} updated with artifacts."
           else
             gh release create "$TAG" dist/*.tgz dist/*-offline-*.zip \
               --repo "${{ github.repository }}" \
               --title "$TAG" \
-              --notes "dsh-ide-ui $TAG — 预编译插件包（.tgz）与无编译环境安装包（-offline-.zip）。
+              --notes "dsh-ide-ui ${TAG} — 预编译插件包（.tgz）与无编译环境安装包（-offline-.zip）。
                     安装见 docs/deployment.md：解压 zip → 运行 install-dsh-ide-ui.ps1 → 重启 dsh web。"
-            echo "Release $TAG created."
+            echo "Release ${TAG} created."
           fi
 
       - name: Publish to npm (optional, needs NPM_TOKEN)

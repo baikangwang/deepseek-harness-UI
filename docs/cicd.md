@@ -6,20 +6,25 @@
 ## 1. 方案概览
 
 仓库内置 `.github/workflows/release.yml`（GitHub Actions，ubuntu-latest +
-pnpm 11 + Node 22）。**推送 `v<semver>` 格式的 tag 自动触发**，全流程无人值守：
+pnpm 11 + Node 22）。**两段式：自动打包 + 人工确认发布**。
 
 ```
-push tag v0.1.0-rc.20
-  └─ Checkout → Setup pnpm(11) → Setup Node(22, cache:pnpm)
-      → pnpm install --frozen-lockfile
-      → pnpm typecheck
-      → pnpm build            (tsdown 三产物)
-      → [校验] tag 版本 == package.json version（不一致直接失败）
-      → npm pack → dist/dsh-ide-ui-<ver>.tgz
-      → scripts/build-offline-package.ps1 → dist/dsh-ide-ui-offline-<ver>.zip
-      → GitHub Release 创建/更新，挂载两个产物
-      → [可选] npm publish（配置 NPM_TOKEN 才执行，否则自动跳过）
+push master（或手动 Run workflow）
+  └─ build job（自动，无门禁）
+       ├─ install → typecheck → build（tsdown 三产物）
+       ├─ 输出 package.json 版本
+       └─ tag 触发时校验 tag 版本 == package.json 版本
+  └─ publish job（挂 environment: release —— 需要你在 Actions 页面点 Approve）
+       ├─ npm pack → dsh-ide-ui-<ver>.tgz
+       ├─ build-offline-package.ps1 → dsh-ide-ui-offline-<ver>.zip
+       ├─ 自动打 tag v<ver>（不存在才创建；GITHUB_TOKEN 推送不会再次触发 workflow）
+       ├─ GitHub Release 创建/更新，挂载两个产物
+       └─ [可选] npm publish（配置 NPM_TOKEN 才执行）
 ```
+
+**关键语义**：每次 push master 都会自动构建打包（build 无门禁），但**任何发布动作
+（打 tag / Release / npm）都在批准后才发生**——publish job 会停在
+"Waiting for approval"，你点 Approve 才继续。不是每次推送都会发版。
 
 产物：
 
@@ -30,18 +35,37 @@ push tag v0.1.0-rc.20
 
 ## 2. 使用方式
 
+### 2.1 一次性配置：创建批准门禁（首次）
+
+1. 仓库 **Settings → Environments → New environment**，命名 `release`。
+2. 在 `release` environment 里加 **Required reviewers**（选你自己的 GitHub 账号）。
+3. 完成。之后 publish job 每次都会等你的批准。
+
+### 2.2 日常发布（确认后才发）
+
 ```powershell
-# 1) 本地 bump 版本并提交
+# 1) 本地 bump 版本并提交、推送（bump 后每次 push 都会自动 build）
 #    编辑 packages/ide/package.json 的 "version"（如 0.1.0-rc.20）
-# 2) 打 tag（必须 v 前缀，且与 package.json 版本一致）
-git tag v0.1.0-rc.20
-git push origin v0.1.0-rc.20
+git add packages/ide/package.json && git commit -m "chore: bump to 0.1.0-rc.20"
+git push origin master
 ```
 
-或手动触发（不 bump 版本，用当前版本重新打包）：Actions 页面 → `release` →
-**Run workflow**（master 分支，版本号留空）。
+2. Actions 页面 → `release` 运行 → **build 完成后** publish job 显示
+   **Waiting for approval**。
+3. 检查产物没问题 → 点 **Review deployments → Approve**：
+   - 自动创建/推送 tag `v0.1.0-rc.20`（若不存在）
+   - 生成 `.tgz` + 离线 `.zip` 并挂到 GitHub Release
+   - （若配了 NPM_TOKEN）发布到 npm
+4. 不想发版？不批准即可（或取消运行）；build 产物不产生 Release，无副作用。
 
-tag 与 package.json 版本不一致时 CI 直接失败——防止发布错误版本。
+手动补发（不 bump 版本）：Actions → `release` → **Run workflow**（master），
+同样要批准才发。
+
+tag 触发兼容：`git push origin v0.1.0-rc.20` 也走同一流程（build 校验版本一致 +
+publish 仍需批准），用于重发既有版本。
+
+> 为什么自动打 tag 不会死循环：publish 用 `GITHUB_TOKEN` 推 tag，GitHub 对
+> `GITHUB_TOKEN` 触发的 push **不再次触发 workflow**。
 
 ## 3. 可选：npm 发布
 
@@ -64,12 +88,10 @@ workflow 中的 npm 发布步骤由 job 级 `env.NPM_TOKEN` 门控，未配置�
 **排查与结论**：先确认文件真的在远程（`git ls-tree origin/master -- .github/workflows/`
 能查到、`git show origin/master:.github/workflows/release.yml` 内容正确）。最终
 确认是**页面缓存/时序**问题——workflow 文件已在默认分支 master 上，刷新
-（Ctrl+F5）后可见。另需注意：**推送普通 commit 不会触发任何运行**（触发条件只有
-`push tag` 和手动 `Run workflow`），Actions 页面没有运行记录是正常的，不代表
-workflow 没生效。
-
-排查清单：文件在默认分支、Actions 未被仓库禁用
-（Settings → Actions → General）、无 `Invalid workflow file` 红色横幅。
+（Ctrl+F5）后可见。注意：**推送普通 commit 只触发 build job**（自动打包验证），
+publish 需要批准；若看不到任何运行记录，确认 workflow 文件在默认分支、Actions
+未被仓库禁用（Settings → Actions → General）、无 `Invalid workflow file` 红色
+横幅。
 
 ### 4.2 Node.js 20 弃用导致 action 报错
 
