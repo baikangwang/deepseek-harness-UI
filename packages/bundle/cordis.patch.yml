@@ -1,8 +1,0 @@
-# ide-ui 组合层：插入插件行。
-# 行 id 固定（ide-ui / ui-ide），后应用的层可按 id 覆盖；成员可在 profile 自己的 cordis.patch.yml 覆盖。
-# 命名遵循官方惯例：host 行短语义 id，client UI 行 ui-* 前缀（对齐 ui-sidebar / ui-tool）。
-- insert:
-    - id: ide-ui
-      name: 'dsh-ide-ui'
-    - id: ui-ide
-      name: 'dsh-client-ide-ui'

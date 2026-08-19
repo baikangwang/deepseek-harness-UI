@@ -7,3 +7,5 @@ build/
 *.log
 .DS_Store
 lib/**/tsconfig.*.tsbuildinfo
+.npm-cache-tmp/
+packages/ide/lib/client.js
