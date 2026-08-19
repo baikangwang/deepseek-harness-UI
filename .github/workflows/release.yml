@@ -44,7 +44,8 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 9
+          # must match the version that wrote pnpm-lock.yaml (lockfile v9.0, pnpm 11)
+          version: 11
 
       - name: Setup Node
         uses: actions/setup-node@v5
