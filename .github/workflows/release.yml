@@ -32,6 +32,10 @@ permissions:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    # Job-level env: visible to step `if` conditions (step env is not), and
+    # secrets may not be referenced directly inside `if` expressions.
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -101,8 +105,6 @@ jobs:
 
       - name: Publish to npm (optional, needs NPM_TOKEN)
         if: env.NPM_TOKEN != ''
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           cd packages/ide
