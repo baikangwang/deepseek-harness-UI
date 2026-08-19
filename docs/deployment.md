@@ -15,7 +15,50 @@
 > junction 镜像（195 个，`autoInstallPeers: false` 是有意为之）。安装本插件的
 > peer 依赖（react/react-dom）时注意不要引入真实 core 包。
 
-## 1. 一次构建 + 打包（每次改代码）
+## 1. 无编译环境安装（离线安装包，目标机一键装）
+
+适用于**没有编译环境**的机器（无 TypeScript / tsdown / pnpm / 源码仓库）。
+只需 Windows PowerShell + 已装好的 DSH web（运行 dsh 本身需要 Node.js）。
+
+**离线包**：`dist/dsh-ide-ui-offline-<version>.zip`，内含：
+
+```
+├── install-dsh-ide-ui.ps1      # 一键安装脚本（含中文说明，UTF-8 BOM）
+├── dsh-ide-ui-<version>.tgz    # 预编译插件（Host + Client 双面）
+└── README.md                   # 安装/升级/卸载说明
+```
+
+**目标机三步安装**：
+
+```powershell
+# 1. 解压 zip 到任意目录
+# 2. 在该目录运行（默认装到 ~/.dsh/profiles/web）
+powershell -ExecutionPolicy Bypass -File .\install-dsh-ide-ui.ps1
+#    其他 profile: -ProfileName myprofile
+# 3. 完全重启 dsh web（必须重启进程，刷新不够）
+Get-NetTCPConnection -LocalPort 3080 | Select-Object OwningProcess
+Stop-Process -Id <PID> -Force
+npx @deepseek-ai/dsh web --port 3080
+```
+
+脚本自动完成：备份旧安装（`.bak-<时间戳>`）→ `tar -xf` 解包 → 复制
+`lib/` + `package.json` 到 `node_modules\dsh-ide-ui` → profile 依赖指向 tgz
+（`file:`）→ `cordis.patch.yml` 写入激活行（幂等）→ 快速校验
+（host `IdeService` / client bundle id / 槽位注册）。升级 = 换新版 zip 再跑一次；
+卸载 = 删 `node_modules\dsh-ide-ui` + 注释 patch 行。
+
+**生成离线包**（开发者机器）：
+
+```powershell
+# 前提：已 npm pack 出 dist/dsh-ide-ui-<version>.tgz
+powershell -ExecutionPolicy Bypass -File scripts\build-offline-package.ps1
+# 产出 dist/dsh-ide-ui-offline-<version>.zip
+```
+
+> 注意：PowerShell 5.1 按 ANSI 读取无 BOM 的 .ps1 会乱码，build 脚本已强制给
+> 安装脚本加 UTF-8 BOM；若手动分发脚本请保持 BOM。
+
+## 2. 一次构建 + 打包（每次改代码）
 
 在仓库根 `D:\working\projects\deepseek-harness-UI`：
 
@@ -35,7 +78,7 @@ npm pack --pack-destination D:\working\projects\deepseek-harness-UI\dist `
   --cache D:\working\projects\deepseek-harness-UI\.npm-cache-tmp   # 在 packages/ide 下执行
 ```
 
-## 2. 部署到 profile
+## 3. 部署到 profile
 
 ```powershell
 $tmp  = "D:\working\projects\deepseek-harness-UI\.tmp-deploy"
@@ -58,7 +101,7 @@ $j.dependencies.'dsh-ide-ui' = "file:D:/working/projects/deepseek-harness-UI/dis
 [System.IO.File]::WriteAllText($p, ($j | ConvertTo-Json -Depth 20), (New-Object System.Text.UTF8Encoding($false)))
 ```
 
-## 3. 验证（不启动）
+## 4. 验证（不启动）
 
 ```powershell
 & "D:\working\projects\deepseek-harness-UI\scripts\verify-ide-plugin.ps1"
@@ -70,7 +113,7 @@ markdown / KaTeX / 文件图标 / 会话持久化 / 预览开关）、版本号�
 junction ≥ 190、以及近期修复回归项（CSS 转义→Unicode 解码、语言 ID 扩展名展开、
 tsconfig.json 走 json 图标、20px 图标）。
 
-## 4. 重启生效
+## 5. 重启生效
 
 - **Host 面 / 版本变更**：必须完全重启 dsh web（patch 行在启动时组合）。
   若 3080 被残留进程占用：`Get-NetTCPConnection -LocalPort 3080` 找到 PID 后
@@ -78,7 +121,7 @@ tsconfig.json 走 json 图标、20px 图标）。
 - **Client 面改动**：刷新浏览器页面即可（`client.js` 静态服务），
   无需重启进程。
 
-## 5. 验证点
+## 6. 验证点
 
 | # | 验证点 | 预期 |
 |---|---|---|
@@ -90,7 +133,7 @@ tsconfig.json 走 json 图标、20px 图标）。
 | 6 | 编辑器 | 打开 `.md` 后中栏「编辑器」标签页，默认预览模式渲染 GFM 表格 / KaTeX |
 | 7 | 控制台 | F12 无 `slot already has a registration`、无 RPC 报错 |
 
-## 6. 常见问题
+## 7. 常见问题
 
 | 现象 | 原因 / 处理 |
 |---|---|
@@ -103,7 +146,7 @@ tsconfig.json 走 json 图标、20px 图标）。
 | `Insufficient tool messages following tool_calls` | 历史会话被污染（重复 core 包实例导致）。**不要复用旧会话测试**，新建会话。 |
 | `slot "sidebar.workspaces" already has a registration at priority 0` | client bundle 缺 `priority: -1`，确认是最新构建。 |
 
-## 7. 回归注意
+## 8. 回归注意
 
 - 测试请在**新会话**进行；会话 `fc895164` 历史已损坏，不可复用。
 - 会话管理视图的展开状态存 `localStorage`（`dshide.session.expanded.v1`），

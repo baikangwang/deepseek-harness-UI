@@ -66,13 +66,23 @@ deepseek-harness-UI/
 │           ├── invariant.ts
 │           └── client/       # 浏览器半：侧栏视图、编辑器、Markdown 渲染、图标
 └── scripts/
-    ├── verify-ide-plugin.ps1 # 28 项环境验证（部署后必须全绿）
-    └── gen-fileicons-map.mjs # 从 CodeBuddy genie 主题重新生成文件图标映射
+    ├── verify-ide-plugin.ps1        # 30 项环境验证（部署后必须全绿）
+    ├── gen-fileicons-map.mjs        # 从 CodeBuddy genie 主题重新生成文件图标映射
+    ├── build-offline-package.ps1    # 生成无编译环境的离线安装 zip
+    └── offline/
+        ├── install-dsh-ide-ui.ps1   # 目标机一键安装脚本（打进离线包）
+        └── README.md                # 离线安装/升级/卸载说明
 ```
 
 ## 安装
 
-见 [`docs/deployment.md`](docs/deployment.md)。要点：
+见 [`docs/deployment.md`](docs/deployment.md)。两种方式：
+
+**无编译环境（目标机一键装）**：直接用 `dist/dsh-ide-ui-offline-<version>.zip`
+（预编译 + 一键脚本），解压后运行 `install-dsh-ide-ui.ps1` 即可——无需
+TypeScript / tsdown / pnpm / 源码。
+
+**开发者流程**：
 
 1. `npm pack` 产出 `dist/dsh-ide-ui-<version>.tgz`。
 2. 解包替换 `~/.dsh/profiles/<name>/node_modules/dsh-ide-ui`（lib/ + package.json）。

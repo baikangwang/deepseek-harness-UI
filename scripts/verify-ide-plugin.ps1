@@ -1,4 +1,4 @@
-# verify-ide-plugin.ps1 - one-click dsh-ide-ui environment verification
+﻿# verify-ide-plugin.ps1 - one-click dsh-ide-ui environment verification
 # Usage: pwsh -File scripts/verify-ide-plugin.ps1
 # All checks must print [OK] before restarting dsh web; fix any [FAIL] first.
 
