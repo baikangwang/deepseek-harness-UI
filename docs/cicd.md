@@ -1,73 +1,80 @@
-# dsh-ide-ui CI/CD 发布方案
+# DSH 包 CI/CD 发布方案（多项目复用）
 
-> 从「本地手动打包」升级为「打 tag 即自动发布」。本文记录方案设计、使用方式、
-> 上线过程中遇到的问题与修复，以及沉淀的经验教训。
+> 从「本地手动打包」升级为「确认后一键发布」：本地脚本自动打 tag，推送
+> `v*` tag 自动触发各仓库自己的 workflow（构建 → 打包 → GitHub Release）。
+> 一套脚本 + 一个 skill，跨多个 DSH 相关项目复用。本文记录方案、使用方式、
+> 上线问题与修复、经验教训。
 
-## 1. 方案概览
+## 1. 方案概览（三层）
 
-仓库内置 `.github/workflows/release.yml`（GitHub Actions，ubuntu-latest +
-pnpm 11 + Node 22）。**两段式：自动打包 + 人工确认发布**。
+| 层 | 载体 | 职责 | 复用 |
+|---|---|---|---|
+| 操作层 | DSH `release` skill（`skills/release/SKILL.md`） | agent 识别项目、读配置、前置检查、**向用户确认**、调执行层、验证 | 一个 skill 挂多个 agent 预设 |
+| 执行层 | `scripts/dsh-release.mjs`（幂等） | 读项目版本 → 自动打 tag + push → 维护各仓库 workflow（缺失生成/不一致覆盖） | 一份脚本，`dsh-release.json` 区分项目 |
+| CI 层 | 各仓库独立 `.github/workflows/release.yml` | 收到 `v*` tag → 校验版本 → typecheck → build → npm pack → 离线 zip → GitHub Release（可选 npm） | 每仓库一份（由执行层按模板生成） |
 
+**发布 = 跑 workflow 打包**（不是 npm 发布；npm 可选，以后再说）。
+
+**项目差异全部收敛到 `dsh-release.json`**（仓库根，进 git）：
+
+```jsonc
+{
+  "packageDir": "packages/ide",
+  "packageName": "dsh-ide-ui",
+  "tagPrefix": "v",
+  "offline": true,
+  "offlineScript": "scripts/build-offline-package.ps1",
+  "typecheck": "pnpm typecheck",
+  "build": "pnpm build",
+  "npm": false,
+  "pnpmVersion": 11
+}
 ```
-push master（或手动 Run workflow）
-  └─ build job（自动，无门禁）
-       ├─ install → typecheck → build（tsdown 三产物）
-       ├─ 输出 package.json 版本
-       └─ tag 触发时校验 tag 版本 == package.json 版本
-  └─ publish job（挂 environment: release —— 需要你在 Actions 页面点 Approve）
-       ├─ npm pack → dsh-ide-ui-<ver>.tgz
-       ├─ build-offline-package.ps1 → dsh-ide-ui-offline-<ver>.zip
-       ├─ 自动打 tag v<ver>（不存在才创建；GITHUB_TOKEN 推送不会再次触发 workflow）
-       ├─ GitHub Release 创建/更新，挂载两个产物
-       └─ [可选] npm publish（配置 NPM_TOKEN 才执行）
-```
 
-**关键语义**：每次 push master 都会自动构建打包（build 无门禁），但**任何发布动作
-（打 tag / Release / npm）都在批准后才发生**——publish job 会停在
-"Waiting for approval"，你点 Approve 才继续。不是每次推送都会发版。
+各项目仓库、版本号、tag 前缀各不相同——脚本/模板零改动，只改这个文件。
 
-产物：
+**关键语义**：普通 `git push` 完全不触发任何构建；只有推送 `v*` tag（本地脚本
+或网页手动打 tag）才触发 workflow。**确认点在打 tag 之前**（脚本交互或对话询问）。
 
-| 产物 | 用途 |
-|---|---|
-| `dsh-ide-ui-<ver>.tgz` | 预编译插件包（开发者/`file:` 依赖部署） |
-| `dsh-ide-ui-offline-<ver>.zip` | **无编译环境安装包**：解压 → 跑 `install-dsh-ide-ui.ps1` → 重启 dsh web |
-
-## 2. 使用方式
-
-### 2.1 一次性配置：创建批准门禁（首次）
-
-1. 仓库 **Settings → Environments → New environment**，命名 `release`。
-2. 在 `release` environment 里加 **Required reviewers**（选你自己的 GitHub 账号）。
-3. 完成。之后 publish job 每次都会等你的批准。
-
-### 2.2 日常发布（确认后才发）
+## 2. 使用方式（当前项目）
 
 ```powershell
-# 1) 本地 bump 版本并提交、推送（bump 后每次 push 都会自动 build）
+# 1) bump 版本并提交推送（普通推送，零触发）
 #    编辑 packages/ide/package.json 的 "version"（如 0.1.0-rc.20）
 git add packages/ide/package.json && git commit -m "chore: bump to 0.1.0-rc.20"
 git push origin master
+
+# 2) 确认发布（自动读版本、自动打 tag）
+node scripts/dsh-release.mjs            # 交互：显示"将发布 vX" → 你按 Y
+#    agent 场景：对话里确认后执行 node scripts/dsh-release.mjs --yes
+#    预演：node scripts/dsh-release.mjs --dry-run（不改任何东西）
+
+# 3) 完成——tag 推送自动触发该仓库 workflow，产物挂到 Release 页面
 ```
 
-2. Actions 页面 → `release` 运行 → **build 完成后** publish job 显示
-   **Waiting for approval**。
-3. 检查产物没问题 → 点 **Review deployments → Approve**：
-   - 自动创建/推送 tag `v0.1.0-rc.20`（若不存在）
-   - 生成 `.tgz` + 离线 `.zip` 并挂到 GitHub Release
-   - （若配了 NPM_TOKEN）发布到 npm
-4. 不想发版？不批准即可（或取消运行）；build 产物不产生 Release，无副作用。
+脚本幂等行为：
 
-手动补发（不 bump 版本）：Actions → `release` → **Run workflow**（master），
-同样要批准才发。
+| 对象 | 已存在 | 不存在 |
+|---|---|---|
+| `v<版本>` tag | 跳过（`--force` 强制重建重发） | 自动创建 + 推送 |
+| `release.yml` | 一致 keep；不一致**覆盖** | 自动生成 |
+| GitHub Release | workflow 内复用更新（clobber） | workflow 内创建 |
 
-tag 触发兼容：`git push origin v0.1.0-rc.20` 也走同一流程（build 校验版本一致 +
-publish 仍需批准），用于重发既有版本。
+网页方式等价：在 GitHub 上给 commit 创建 `v<版本>` tag → 自动触发同一 workflow
+（版本号与 package.json 不一致会在 workflow 内被拒绝）。
 
-> 为什么自动打 tag 不会死循环：publish 用 `GITHUB_TOKEN` 推 tag，GitHub 对
-> `GITHUB_TOKEN` 触发的 push **不再次触发 workflow**。
+## 3. 多项目复用（接入新项目）
 
-## 3. 可选：npm 发布
+1. 复制 `scripts/dsh-release.mjs` 到新项目 `scripts/`；
+2. 写新项目的 `dsh-release.json`（包目录/包名/命令/离线脚本）；
+3. 跑一次发布流程——workflow 缺失会自动生成并提交推送（自举）；
+4. skill 挂到该项目 agent 预设：把 `skills/release/` 复制到
+   `~/.dsh/.agent-presets/<id>/skills/release/`。
+
+无 `dsh-release.json` 时脚本自动探测（有 `dsh.client` / `dependencies.zod` /
+`dsh-` 前缀的 package.json）；探测不到则要求手动指定 `--root`。
+
+## 4. 可选：npm 发布
 
 当前 npm 发布**刻意关闭**（用户决策：先解决打包，npm 以后再说）。将来要开启：
 
@@ -79,7 +86,7 @@ publish 仍需批准），用于重发既有版本。
 workflow 中的 npm 发布步骤由 job 级 `env.NPM_TOKEN` 门控，未配置即静默跳过，
 不影响打包与 Release。
 
-## 4. 上线过程的问题与修复
+## 5. 上线过程的问题与修复
 
 ### 4.1 Actions 页面看不到 workflow
 
@@ -157,7 +164,7 @@ junction 的 node_modules**，从未声明进 package.json。CI 冷环境 `pnpm 
 **教训**：**CI 冷环境是唯一真相**。所有 import 的模块必须能在 `pnpm install`
 后解析；本地 junction 缓存会掩盖依赖声明缺失，`tsc --noEmit` 本地绿不代表 CI 绿。
 
-## 5. 经验教训汇总
+## 6. 经验教训汇总
 
 ### 5.1 本地环境与 CI 冷环境的差异（最大教训）
 
@@ -198,7 +205,7 @@ junction 的 node_modules**，从未声明进 package.json。CI 冷环境 `pnpm 
 - workflow 改动后**旧运行记录不会更新**——看日志前先确认运行对应的 commit 是最新
   推送；排查"还是旧错误"时先核对 commit hash。
 
-## 6. 本地流程 vs CI 流程
+## 7. 本地流程 vs CI 流程
 
 | 步骤 | 本地（开发者机） | CI（GitHub Actions） |
 |---|---|---|
@@ -210,7 +217,7 @@ junction 的 node_modules**，从未声明进 package.json。CI 冷环境 `pnpm 
 | 部署验证 | `verify-ide-plugin.ps1`（30 项，需真实 profile） | 不跑（无 profile 环境） |
 | 版本管理 | 手动 bump + 提交 | 校验 tag == package.json |
 
-## 7. 后续改进建议
+## 8. 后续改进建议
 
 - **npm 发布**：需要时配置 `NPM_TOKEN` secret 即可，代码零改动。
 - **更严格的可复现**：`actions/*@v5` 可改 pin 到 commit SHA（供应链安全），

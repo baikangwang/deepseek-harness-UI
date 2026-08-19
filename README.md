@@ -56,23 +56,27 @@ KaTeX 的富渲染预览。文件图标与 VSCode / CodeBuddy 同源同渲染方
 ```
 deepseek-harness-UI/
 ├── README.md                 # 本文件
+├── dsh-release.json          # 发布配置（多项目复用：包目录/包名/命令/离线开关）
 ├── docs/
 │   ├── architecture.md       # 架构设计：分层、槽位策略、RPC 契约、组件、图标设计原理
 │   ├── deployment.md         # 本地部署与验证流程
-│   └── cicd.md               # CI/CD 自动发布方案（含踩坑记录与经验教训）
+│   └── cicd.md               # CI/CD 发布方案（多项目复用，含踩坑记录与经验教训）
 ├── packages/
 │   └── ide/                  # 单包双面：Host `IdeService`（ide Remote）+ Client 侧栏/编辑器
 │       └── src/
 │           ├── index.ts      # Host 半：IdeService（fs/git/search/系统操作）
 │           ├── invariant.ts
 │           └── client/       # 浏览器半：侧栏视图、编辑器、Markdown 渲染、图标
+├── skills/
+│   └── release/SKILL.md      # DSH release skill（操作层，挂到 agent 预设）
 └── scripts/
-    ├── verify-ide-plugin.ps1        # 30 项环境验证（部署后必须全绿）
-    ├── gen-fileicons-map.mjs        # 从 CodeBuddy genie 主题重新生成文件图标映射
-    ├── build-offline-package.ps1    # 生成无编译环境的离线安装 zip
+    ├── dsh-release.mjs       # 发布执行层（幂等：读版本→自动打 tag→维护各仓库 workflow）
+    ├── verify-ide-plugin.ps1 # 30 项环境验证（部署后必须全绿）
+    ├── gen-fileicons-map.mjs # 从 CodeBuddy genie 主题重新生成文件图标映射
+    ├── build-offline-package.ps1 # 生成无编译环境的离线安装 zip
     └── offline/
-        ├── install-dsh-ide-ui.ps1   # 目标机一键安装脚本（打进离线包）
-        └── README.md                # 离线安装/升级/卸载说明
+        ├── install-dsh-ide-ui.ps1 # 目标机一键安装脚本（打进离线包）
+        └── README.md         # 离线安装/升级/卸载说明
 ```
 
 ## 安装
