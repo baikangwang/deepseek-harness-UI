@@ -58,7 +58,8 @@ deepseek-harness-UI/
 ├── README.md                 # 本文件
 ├── docs/
 │   ├── architecture.md       # 架构设计：分层、槽位策略、RPC 契约、组件、图标设计原理
-│   └── deployment.md         # 本地部署与验证流程
+│   ├── deployment.md         # 本地部署与验证流程
+│   └── cicd.md               # CI/CD 自动发布方案（含踩坑记录与经验教训）
 ├── packages/
 │   └── ide/                  # 单包双面：Host `IdeService`（ide Remote）+ Client 侧栏/编辑器
 │       └── src/

@@ -149,7 +149,8 @@ tsconfig.json 走 json 图标、20px 图标）。
 ## 8. 自动发布（CI/CD，GitHub Actions）
 
 仓库内置 `.github/workflows/release.yml`，**打 tag 即自动发布**，无需在发布机上
-做任何构建：
+做任何构建。完整方案（流程、配置、踩坑记录、经验教训）见
+[`docs/cicd.md`](cicd.md)。快速上手：
 
 ```powershell
 # 1. 本地 bump 版本并提交
