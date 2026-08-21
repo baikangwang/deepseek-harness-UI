@@ -26,6 +26,8 @@ import type {} from '@deepseek-ai/dsh-fs'
 import type {} from '@deepseek-ai/dsh-subprocess'
 import type {} from '@deepseek-ai/dsh-workspace'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
+import { DEFAULT_IDE_SETTINGS, normalizeIdeSettings, type IdeSettings } from './settings-shared.ts'
+import { IDE_SETTINGS_NAMESPACE, registerIdeSettings } from './settings.ts'
 
 /** Subprocess outcome from the `subprocess` service. */
 interface RunResult {
@@ -42,6 +44,17 @@ export class IdeService extends TypertRemoteService {
 
   constructor(ctx: Context) {
     super(ctx, 'ide')
+    // Optional `ide` settings namespace (rc.8 plugin-owned settings surface).
+    // Probes instead of injects: a deployment without the settings service
+    // must still activate this service (consumers use the defaults).
+    registerIdeSettings(ctx)
+  }
+
+  /** Resolved `ide` settings (defaults when the settings service is absent). */
+  private ideSettings(): IdeSettings {
+    const settings = this.ctx.get('settings') as { get(ns: unknown): unknown } | undefined
+    if (settings === undefined) return DEFAULT_IDE_SETTINGS
+    return normalizeIdeSettings(settings.get(IDE_SETTINGS_NAMESPACE))
   }
 
   private str(v: unknown): string {
@@ -326,12 +339,16 @@ export class IdeService extends TypertRemoteService {
     if (fs === undefined) return { error: 'filesystem service unavailable', matches: [], files: 0, truncated: false }
     if (query === '' || cwd === '') return { error: '', matches: [], files: 0, truncated: false }
 
+    // Exclude/cap policy comes from the `ide` settings namespace (rc.8
+    // plugin-owned settings surface); defaults match the historical constants.
+    const cfg = this.ideSettings().search
+
     // Fast path: ripgrep, when available.
     const subprocess = this.ctx.subprocess
     if (subprocess !== undefined) {
       const rgArgs = [
         '--json', '--no-config', '--line-number', '-e', query,
-        '--glob', '!**/node_modules/**', '--glob', '!**/.git/**', '--glob', '!**/dist/**', '--glob', '!**/build/**',
+        ...cfg.excludes.flatMap((d) => ['--glob', `!**/${d}/**`]),
         caseSensitive ? '--case-sensitive' : '--ignore-case',
       ]
       const rg = await this.run('rg', cwd, rgArgs)
@@ -350,8 +367,8 @@ export class IdeService extends TypertRemoteService {
             }
           } catch { /* skip malformed line */ }
         }
-        const truncated = matches.length > 200
-        return { error: '', matches: matches.slice(0, 200), files: new Set(matches.map((m) => m.path)).size, truncated }
+        const truncated = matches.length > cfg.maxMatches
+        return { error: '', matches: matches.slice(0, cfg.maxMatches), files: new Set(matches.map((m) => m.path)).size, truncated }
       }
     }
 
@@ -360,9 +377,9 @@ export class IdeService extends TypertRemoteService {
     const matches: SearchMatch[] = []
     let files = 0
     let truncated = false
-    const MAX_FILES = 400
-    const MAX_MATCHES = 200
-    const SKIP = new Set(['.git', 'node_modules', 'dist', 'build', 'out', 'target', 'coverage', '.next', '.dsh', '.agent-presets', '__pycache__', '.venv', 'venv', '.idea', '.vscode'])
+    const MAX_FILES = cfg.maxFiles
+    const MAX_MATCHES = cfg.maxMatches
+    const SKIP = new Set(cfg.excludes)
 
     const walk = async (target: FsTarget): Promise<void> => {
       if (truncated || files >= MAX_FILES || matches.length >= MAX_MATCHES) return

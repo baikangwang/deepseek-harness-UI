@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'tsdown'
 import ts from 'typescript'
 
@@ -46,6 +47,30 @@ const lowerDecorators: {
 /** Client bundle identity: the module-loader closure handoff id and the CSS tag. */
 const ID = 'dsh-ide-ui'
 
+/**
+ * Installed version and DSH baseline, injected into `src/client/version.ts`
+ * at build time. The single source of truth for the version is this
+ * package.json's `version` field; the baseline is maintained here and must
+ * track the DSH release this build targets.
+ */
+const PKG = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'package.json'), 'utf8')) as { version: string }
+const DSH_BASELINE = '0.1.0-rc.8'
+
+/** Replace the version.ts module body with literal constants (see src/client/version.ts). */
+const versionInject = (): object => ({
+  name: 'dshide-version-inject',
+  transform(code: string, id: string) {
+    if (!id.replace(/\\/g, '/').endsWith('/version.ts')) return null
+    return {
+      code: [
+        `export const IDE_VERSION = ${JSON.stringify(PKG.version)};`,
+        `export const IDE_DSH_BASELINE = ${JSON.stringify(DSH_BASELINE)};`,
+      ].join('\n'),
+      map: null,
+    }
+  },
+})
+
 const cssInject = (): object => ({
   name: 'dshide-css-inject',
   resolveId(source: string, importer?: string) {
@@ -84,7 +109,7 @@ export default defineConfig([
     platform: 'node',
     target: 'es2024',
     fixedExtension: false,
-    external: ['@deepseek-ai/dsh-typert-protocol'],
+    external: ['@deepseek-ai/dsh-typert-protocol', '@deepseek-ai/dsh-settings', '@deepseek-ai/schemastery'],
     dts: false,
     clean: false,
     plugins: [lowerDecorators],
@@ -107,12 +132,16 @@ export default defineConfig([
     platform: 'browser',
     target: 'es2024',
     deps: {
-      neverBundle: ['react', 'react-dom'],
-      alwaysBundle: (id: string) => (id === 'react' || id === 'react-dom' ? false : true),
+      // react/react-dom: PLATFORM_MODULES baseline. dsh-client-runtime: a
+      // PRELOADED_CLIENT_EXTERNALS dynamic package — its published lib/client.js
+      // is a loader-factory bundle (non-static exports), so it must stay
+      // external and resolve through the loader's require at runtime.
+      neverBundle: ['react', 'react-dom', '@deepseek-ai/dsh-client-runtime', '@deepseek-ai/dsh-client-runtime/client'],
+      alwaysBundle: (id: string) => !['react', 'react-dom', '@deepseek-ai/dsh-client-runtime', '@deepseek-ai/dsh-client-runtime/client'].includes(id),
     },
     dts: false,
     clean: false,
-    plugins: [cssInject()],
+    plugins: [cssInject(), versionInject()],
     outputOptions: {
       entryFileNames: 'client.js',
       banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(ID)}, factory: (require) => {`,

@@ -1,4 +1,4 @@
-﻿# verify-ide-plugin.ps1 - one-click dsh-ide-ui environment verification
+# verify-ide-plugin.ps1 - one-click dsh-ide-ui environment verification
 # Usage: pwsh -File scripts/verify-ide-plugin.ps1
 # All checks must print [OK] before restarting dsh web; fix any [FAIL] first.
 
@@ -54,11 +54,18 @@ Check "icon size 20px" ($src -match 'fileIcon\(e\.path, 20') "file icons still r
 Check "feature: session expand persist" ($src -match 'dshide\.session\.expanded') "session tree expansion persistence missing"
 Check "feature: native session rows" ($src -match 'dshide-session-row' -and $src -match 'dshide-project-row') "native-aligned session rows missing"
 Check "feature: preview toggle" ($src -match 'PreviewToggle') "markdown preview toggle missing"
+Check "feature: session search degradation (rc.8)" ($src -match 'dshide-search-warning') "rc.8 session search degradation missing"
+Check "feature: settings card (rc.8)" ($src -match 'settings\.plugin\.item' -and $src -match 'dshide-set-card') "rc.8 settings card missing"
+Check "feature: remote event refresh (rc.8)" ($src -match 'credentials/updated' -and $src -match 'scm\.subscribe') "rc.8 credentials/updated refresh missing"
+Check "feature: home abbreviation (rc.8)" ($src -match 'abbreviateHomePath') "rc.8 ~ path abbreviation missing"
+Check "feature: copy @ reference (rc.8)" ($src -match 'copyRef') "rc.8 @file reference copy missing"
+Check "feature: version display" ($src -match 'IDE_DSH_BASELINE' -and $src -match 'dshide-set-desc' -and $src -match '0\.1\.0-rc\.20') "version line missing in client bundle"
+Check "feature: settings card collapse (official PluginCard style)" ($src -match 'dshide-set-card-head' -and $src -match 'dshide-set-group-head' -and $src -match 'IDE UI 设置') "settings card collapse/group boxes missing"
 
 # 5. dsh.client declaration present (dual-face discovery)
 $pkgJson = Get-Content "$profile\node_modules\dsh-ide-ui\package.json" -Raw
 Check "dsh.client declared" ($pkgJson -match '"client"\s*:\s*\{[^}]*"platform"\s*:\s*"web"') "browser half will not be discovered"
-Check "version is rc.19" ($pkgJson -match '"version"\s*:\s*"0\.1\.0-rc\.19"') "package version not bumped"
+Check "version is rc.20" ($pkgJson -match '"version"\s*:\s*"0\.1\.0-rc\.20"') "package version not bumped"
 
 # 6. no real core packages (fallback lives under profiles/node_modules, NOT profiles/web/node_modules)
 $coreRoot = Join-Path (Split-Path $profile -Parent) 'node_modules\@deepseek-ai'

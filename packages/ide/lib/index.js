@@ -1,4 +1,106 @@
 import { Remote, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
+import { settingsNamespace } from "@deepseek-ai/dsh-settings";
+import z from "@deepseek-ai/schemastery";
+//#region src/settings-shared.ts
+/** Directory names the content search skips by default (keep in sync with the Host search fallback). */
+const IDE_DEFAULT_EXCLUDES = [
+	"node_modules",
+	".git",
+	"dist",
+	"build",
+	"out",
+	"target",
+	"coverage",
+	".next",
+	".dsh",
+	".agent-presets",
+	"__pycache__",
+	".venv",
+	"venv",
+	".idea",
+	".vscode"
+];
+/** Defaults when the settings service is absent or the section is empty. */
+const DEFAULT_IDE_SETTINGS = {
+	search: {
+		excludes: [...IDE_DEFAULT_EXCLUDES],
+		maxFiles: 400,
+		maxMatches: 200
+	},
+	editor: {
+		fontSize: 13,
+		showLineNumbers: true
+	},
+	explorer: { abbreviateHome: true },
+	git: { autoRefreshMs: 3e4 }
+};
+/** Normalize a possibly-partial resolved section onto the defaults. */
+function normalizeIdeSettings(value) {
+	const v = value ?? {};
+	const search = v.search ?? {};
+	const editor = v.editor ?? {};
+	const explorer = v.explorer ?? {};
+	const git = v.git ?? {};
+	return {
+		search: {
+			excludes: Array.isArray(search.excludes) && search.excludes.length > 0 ? [...search.excludes] : [...IDE_DEFAULT_EXCLUDES],
+			maxFiles: typeof search.maxFiles === "number" && search.maxFiles > 0 ? search.maxFiles : DEFAULT_IDE_SETTINGS.search.maxFiles,
+			maxMatches: typeof search.maxMatches === "number" && search.maxMatches > 0 ? search.maxMatches : DEFAULT_IDE_SETTINGS.search.maxMatches
+		},
+		editor: {
+			fontSize: typeof editor.fontSize === "number" && editor.fontSize >= 8 && editor.fontSize <= 32 ? editor.fontSize : DEFAULT_IDE_SETTINGS.editor.fontSize,
+			showLineNumbers: typeof editor.showLineNumbers === "boolean" ? editor.showLineNumbers : DEFAULT_IDE_SETTINGS.editor.showLineNumbers
+		},
+		explorer: { abbreviateHome: typeof explorer.abbreviateHome === "boolean" ? explorer.abbreviateHome : DEFAULT_IDE_SETTINGS.explorer.abbreviateHome },
+		git: { autoRefreshMs: typeof git.autoRefreshMs === "number" && git.autoRefreshMs >= 0 ? git.autoRefreshMs : DEFAULT_IDE_SETTINGS.git.autoRefreshMs }
+	};
+}
+//#endregion
+//#region src/settings.ts
+/**
+* Host-side settings registration for the `ide` namespace. Composed as part of
+* the single dsh-ide-ui row: `IdeService` probes the optional `settings`
+* service at construction and registers here when a provider is composed.
+* Absent a settings provider (a minimal deployment), registration is skipped
+* and every consumer falls back to {@link DEFAULT_IDE_SETTINGS}.
+*
+* rc.8: the third-party namespace allowlist was removed ("registering is
+* exposing"), so the browser settings page serves this namespace and the
+* plugin's own card (registered under the `settings.plugin.item` keyed slot)
+* without any host-side changes.
+* @module dsh-ide-ui/settings
+*/
+/** Branded settings namespace for the `ide` section. */
+const IDE_SETTINGS_NAMESPACE = settingsNamespace("ide");
+/** Durable `ide` section schema; also the wire envelope the browser scope validates against. */
+const IdeSettingsSchema = z.object({
+	search: z.object({
+		excludes: z.array(z.string()).default([...IDE_DEFAULT_EXCLUDES]),
+		maxFiles: z.number().default(400),
+		maxMatches: z.number().default(200)
+	}),
+	editor: z.object({
+		fontSize: z.number().default(13),
+		showLineNumbers: z.boolean().default(true)
+	}),
+	explorer: z.object({ abbreviateHome: z.boolean().default(true) }),
+	git: z.object({ autoRefreshMs: z.number().default(3e4) })
+});
+/**
+* Register the `ide` namespace when a settings provider is already composed.
+* Non-blocking by design: this probes `ctx.get('settings')` instead of
+* declaring a hard inject, so a deployment without the settings service still
+* activates the plugin (consumers use the defaults).
+* @param ctx - the plugin context (service construction context).
+* @returns whether the namespace was registered.
+*/
+function registerIdeSettings(ctx) {
+	const settings = ctx.get("settings");
+	if (settings === void 0) return false;
+	settings.register(IDE_SETTINGS_NAMESPACE, IdeSettingsSchema, { applies: "live" });
+	return true;
+}
+//#endregion
 //#region src/index.ts
 var __runInitializers = function(thisArg, initializers, value) {
 	var useValue = arguments.length > 2;
@@ -310,6 +412,13 @@ let IdeService = (() => {
 		constructor(ctx) {
 			super(ctx, "ide");
 			__runInitializers(this, _instanceExtraInitializers);
+			registerIdeSettings(ctx);
+		}
+		/** Resolved `ide` settings (defaults when the settings service is absent). */
+		ideSettings() {
+			const settings = this.ctx.get("settings");
+			if (settings === void 0) return DEFAULT_IDE_SETTINGS;
+			return normalizeIdeSettings(settings.get(IDE_SETTINGS_NAMESPACE));
 		}
 		str(v) {
 			return v == null ? "" : String(v);
@@ -755,6 +864,7 @@ let IdeService = (() => {
 				files: 0,
 				truncated: false
 			};
+			const cfg = this.ideSettings().search;
 			if (this.ctx.subprocess !== void 0) {
 				const rgArgs = [
 					"--json",
@@ -762,14 +872,7 @@ let IdeService = (() => {
 					"--line-number",
 					"-e",
 					query,
-					"--glob",
-					"!**/node_modules/**",
-					"--glob",
-					"!**/.git/**",
-					"--glob",
-					"!**/dist/**",
-					"--glob",
-					"!**/build/**",
+					...cfg.excludes.flatMap((d) => ["--glob", `!**/${d}/**`]),
 					caseSensitive ? "--case-sensitive" : "--ignore-case"
 				];
 				const rg = await this.run("rg", cwd, rgArgs);
@@ -786,10 +889,10 @@ let IdeService = (() => {
 							});
 						} catch {}
 					}
-					const truncated = matches.length > 200;
+					const truncated = matches.length > cfg.maxMatches;
 					return {
 						error: "",
-						matches: matches.slice(0, 200),
+						matches: matches.slice(0, cfg.maxMatches),
 						files: new Set(matches.map((m) => m.path)).size,
 						truncated
 					};
@@ -799,25 +902,9 @@ let IdeService = (() => {
 			const matches = [];
 			let files = 0;
 			let truncated = false;
-			const MAX_FILES = 400;
-			const MAX_MATCHES = 200;
-			const SKIP = /* @__PURE__ */ new Set([
-				".git",
-				"node_modules",
-				"dist",
-				"build",
-				"out",
-				"target",
-				"coverage",
-				".next",
-				".dsh",
-				".agent-presets",
-				"__pycache__",
-				".venv",
-				"venv",
-				".idea",
-				".vscode"
-			]);
+			const MAX_FILES = cfg.maxFiles;
+			const MAX_MATCHES = cfg.maxMatches;
+			const SKIP = new Set(cfg.excludes);
 			const walk = async (target) => {
 				if (truncated || files >= MAX_FILES || matches.length >= MAX_MATCHES) return;
 				let entries;

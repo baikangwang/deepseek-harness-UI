@@ -9,14 +9,16 @@
 import { createElement, useEffect, useState } from 'react'
 import type { IdeInjected } from './slots.ts'
 import { Icon } from './icons.tsx'
-import { baseName, detectLang, renderLine } from './lib.ts'
+import { baseName, detectLang, displayPath, renderLine } from './lib.ts'
 import { PreviewToggle, renderMarkdown } from './markdown.tsx'
+import { useIdeHome, useIdeSettings } from './settings-store.ts'
 
 const isMarkdown = (p: string): boolean => /\.(md|markdown|mdx)$/i.test(p)
 
 function FileEditor(props: { path: string; injected: IdeInjected }): ReturnType<typeof createElement> {
   const { ide, rpc: call } = props.injected
   const el = createElement
+  const settings = useIdeSettings(props.injected.settings)
   const [st, setSt] = useState<{ loading: boolean; content?: string; error?: string; truncated?: boolean }>({ loading: true })
   const [mdMode, setMdMode] = useState<'preview' | 'source'>(isMarkdown(props.path) ? 'preview' : 'source')
   useEffect(() => {
@@ -28,19 +30,21 @@ function FileEditor(props: { path: string; injected: IdeInjected }): ReturnType<
   if (st.loading) return el('div', { className: 'dshide-loading' }, '加载中…')
   if (st.error) return el('div', { className: 'dshide-empty' }, st.error)
   const content = st.content ?? ''
+  const fsStyle = { fontSize: `${settings.editor.fontSize}px` }
   if (isMarkdown(props.path)) {
     return el('div', { className: 'dshide-editor-body' }, el('div', { className: 'dshide-md-header' }, el('div', { className: 'dshide-preview-path', title: props.path }, props.path), el(PreviewToggle, { mode: mdMode, onChange: setMdMode })), mdMode === 'preview'
       ? el('div', { className: 'dshide-md-scroll' }, renderMarkdown(content))
-      : el('pre', { className: 'dshide-md-source' }, content))
+      : el('pre', { className: 'dshide-md-source', style: fsStyle }, content))
   }
   const lang = detectLang(props.path)
   const lines = content.split(/\r?\n/)
-  return el('div', { className: 'dshide-editor-body' }, el('div', { className: 'dshide-preview-path', title: props.path }, props.path), el('pre', { className: 'dshide-code' }, lines.map((ln, i) => el('div', { key: i, className: 'dshide-codeline' }, el('span', { className: 'dshide-lineno' }, String(i + 1)), renderLine(ln, lang))), st.truncated ? el('div', { className: 'dshide-empty' }, '… 文件过大，已截断') : null))
+  return el('div', { className: 'dshide-editor-body' }, el('div', { className: 'dshide-preview-path', title: props.path }, props.path), el('pre', { className: 'dshide-code', style: fsStyle }, lines.map((ln, i) => el('div', { key: i, className: 'dshide-codeline' }, settings.editor.showLineNumbers ? el('span', { className: 'dshide-lineno' }, String(i + 1)) : null, renderLine(ln, lang))), st.truncated ? el('div', { className: 'dshide-empty' }, '… 文件过大，已截断') : null))
 }
 
 function DiffEditor(props: { cwd: string; path: string; injected: IdeInjected }): ReturnType<typeof createElement> {
   const { ide, rpc: call } = props.injected
   const el = createElement
+  const settings = useIdeSettings(props.injected.settings)
   const [st, setSt] = useState<{ loading: boolean; stdout?: string; stderr?: string }>({ loading: true })
   useEffect(() => {
     let cancelled = false
@@ -51,7 +55,7 @@ function DiffEditor(props: { cwd: string; path: string; injected: IdeInjected })
   if (st.loading) return el('div', { className: 'dshide-loading' }, '加载中…')
   if (st.stderr && !st.stdout) return el('div', { className: 'dshide-empty' }, st.stderr)
   const lines = (st.stdout ?? '').split(/\r?\n/)
-  return el('div', { className: 'dshide-editor-body' }, el('div', { className: 'dshide-preview-path', title: props.path }, props.path), el('pre', { className: 'dshide-code' }, lines.map((ln, i) => {
+  return el('div', { className: 'dshide-editor-body' }, el('div', { className: 'dshide-preview-path', title: props.path }, props.path), el('pre', { className: 'dshide-code', style: { fontSize: `${settings.editor.fontSize}px` } }, lines.map((ln, i) => {
     const cls = ln.startsWith('+') && !ln.startsWith('+++') ? 'dshide-diff-line add' : ln.startsWith('-') && !ln.startsWith('---') ? 'dshide-diff-line del' : ln.startsWith('@@') ? 'dshide-diff-line hunk' : 'dshide-diff-line'
     return el('div', { key: i, className: cls }, ln || ' ')
   })))
@@ -62,10 +66,12 @@ export interface EditorViewProps extends IdeInjected {}
 export function EditorView(props: EditorViewProps): ReturnType<typeof createElement> {
   const el = createElement
   const store = props.store
+  const settings = useIdeSettings(props.settings)
+  const home = useIdeHome(props.home)
   const [state, setState] = useState<{ tabs: readonly typeof store.tabs[number][]; activeId: string | null }>({ tabs: store.tabs as readonly typeof store.tabs[number][], activeId: store.activeId })
   useEffect(() => store.subscribe(() => { setState({ tabs: store.tabs as readonly typeof store.tabs[number][], activeId: store.activeId }) }), [])
   const tabs = state.tabs
   const activeId = state.activeId
   const active = tabs.find((t) => t.key === activeId) ?? null
-  return el('div', { className: 'dshide-editor' }, el('div', { className: 'dshide-etabs' }, tabs.map((t) => el('div', { key: t.key, className: `dshide-etab${t.key === activeId ? ' active' : ''}`, title: t.path, onClick: () => { store.setActive(t.key) } }, el('span', { className: 'dshide-etab-label' }, baseName(t.path) + (t.kind === 'diff' ? ' ⇄' : '')), el('button', { type: 'button', className: 'dshide-etab-close', title: '关闭', onClick: (e: { stopPropagation: () => void }) => { e.stopPropagation(); store.close(t.key) } }, el(Icon, { name: 'close', size: 11 })))), tabs.length === 0 ? el('span', { className: 'dshide-etab-hint' }, '从侧栏打开文件或 diff') : null), active === null ? el('div', { className: 'dshide-editor-empty' }, '在资源管理器 / 搜索 / 源码管理中打开文档') : active.kind === 'file' ? el(FileEditor, { path: active.path, injected: props }) : el(DiffEditor, { cwd: active.cwd ?? '', path: active.path, injected: props }))
+  return el('div', { className: 'dshide-editor' }, el('div', { className: 'dshide-etabs' }, tabs.map((t) => el('div', { key: t.key, className: `dshide-etab${t.key === activeId ? ' active' : ''}`, title: displayPath(t.path, home, settings.explorer.abbreviateHome), onClick: () => { store.setActive(t.key) } }, el('span', { className: 'dshide-etab-label' }, baseName(t.path) + (t.kind === 'diff' ? ' ⇄' : '')), el('button', { type: 'button', className: 'dshide-etab-close', title: '关闭', onClick: (e: { stopPropagation: () => void }) => { e.stopPropagation(); store.close(t.key) } }, el(Icon, { name: 'close', size: 11 })))), tabs.length === 0 ? el('span', { className: 'dshide-etab-hint' }, '从侧栏打开文件或 diff') : null), active === null ? el('div', { className: 'dshide-editor-empty' }, '在资源管理器 / 搜索 / 源码管理中打开文档') : active.kind === 'file' ? el(FileEditor, { path: active.path, injected: props }) : el(DiffEditor, { cwd: active.cwd ?? '', path: active.path, injected: props }))
 }

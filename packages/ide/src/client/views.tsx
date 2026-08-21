@@ -5,20 +5,35 @@
  * @module dsh-client-ide-ui/client/views
  */
 
-import { createElement, useEffect, useState } from 'react'
+import { createElement, useEffect, useRef, useState } from 'react'
 import type { IdeInjected } from './slots.ts'
 import { Icon } from './icons.tsx'
 import { fileIcon } from './fileicons.ts'
-import { baseName, buildGitLookup, dirnameOf, GIT_LABEL, gitDecoration, joinPath, relTime } from './lib.ts'
+import { baseName, buildGitLookup, dirnameOf, displayPath, fileMentionFor, GIT_LABEL, gitDecoration, joinPath, relTime } from './lib.ts'
 import type { GitDecoration, GitLookup } from './lib.ts'
+import { useIdeHome, useIdeSettings } from './settings-store.ts'
 
-type ViewInjected = Pick<IdeInjected, 'ide' | 'rpc' | 'openDoc' | 'sessions' | 'workspaces'>
+type ViewInjected = Pick<IdeInjected, 'ide' | 'rpc' | 'openDoc' | 'sessions' | 'workspaces' | 'settings' | 'home' | 'scm'>
+
+/** One-shot "已复制 @引用" flash keyed on the copied path. */
+function useCopyRef(): { copied: string | null; copyRef: (path: string, kind: 'file' | 'directory') => void } {
+  const [copied, setCopied] = useState<string | null>(null)
+  const copyRef = (path: string, kind: 'file' | 'directory'): void => {
+    const mention = fileMentionFor(path, kind)
+    if (mention === undefined) return
+    void navigator.clipboard.writeText(mention).then(() => {
+      setCopied(path)
+      window.setTimeout(() => { setCopied((c) => (c === path ? null : c)) }, 1200)
+    })
+  }
+  return { copied, copyRef }
+}
 
 /* ------------------------------------------------------------------ */
 /* Explorer                                                           */
 /* ------------------------------------------------------------------ */
 
-interface ExplorerProps extends Pick<ViewInjected, 'ide' | 'rpc' | 'openDoc'> {
+interface ExplorerProps extends Pick<ViewInjected, 'ide' | 'rpc' | 'openDoc' | 'settings' | 'home'> {
   root?: string | undefined
   setRoot: (p: string) => void
   workspaces: Array<{ path: string; title?: string }>
@@ -30,6 +45,9 @@ interface TreeRow {
   path: string
   size: number | null
 }
+
+/** Injected share the recursive tree needs (settings + home for path display). */
+type TreeInjected = Pick<ViewInjected, 'ide' | 'rpc' | 'openDoc' | 'settings' | 'home'>
 
 /** VSCode-style git status dots layered on the file/folder glyph. */
 function GitDots(props: { deco: GitDecoration }): ReturnType<typeof createElement> | null {
@@ -44,9 +62,12 @@ function GitDots(props: { deco: GitDecoration }): ReturnType<typeof createElemen
   return el('span', { className: 'dshide-glyph-wrap', 'aria-hidden': true }, dots)
 }
 
-function Tree(props: { path: string; depth: number; expanded: Set<string>; toggle: (p: string) => void; onOpen: (p: string) => void; showHidden: boolean; filter: string; onRename: (p: string, n: string) => void; onDelete: (p: string, n: string) => void; onMove: (src: string, dest: string) => void; root?: string | undefined; lookup?: GitLookup | null | undefined; injected: Pick<ViewInjected, 'ide' | 'rpc' | 'openDoc'> }): ReturnType<typeof createElement> {
+function Tree(props: { path: string; depth: number; expanded: Set<string>; toggle: (p: string) => void; onOpen: (p: string) => void; showHidden: boolean; filter: string; onRename: (p: string, n: string) => void; onDelete: (p: string, n: string) => void; onMove: (src: string, dest: string) => void; root?: string | undefined; lookup?: GitLookup | null | undefined; injected: TreeInjected }): ReturnType<typeof createElement> {
   const { ide, rpc } = props.injected
   const el = createElement
+  const settings = useIdeSettings(props.injected.settings)
+  const home = useIdeHome(props.injected.home)
+  const { copied, copyRef } = useCopyRef()
   const isOpen = props.depth === 0 || props.expanded.has(props.path)
   const [entries, setEntries] = useState<Array<TreeRow> | undefined>(undefined)
   useEffect(() => {
@@ -60,23 +81,24 @@ function Tree(props: { path: string; depth: number; expanded: Set<string>; toggl
   return el('div', null, entries === undefined ? el('div', { className: 'dshide-loading' }, '加载中…') : visible.map((e) => {
     const deco = props.lookup ? gitDecoration(e.path, props.root ?? '', props.lookup) : null
     const ignoredCls = deco && deco.ignored ? ' ignored' : ''
+    const shown = displayPath(e.path, home, settings.explorer.abbreviateHome)
     if (e.type === 'directory') {
       const open = props.expanded.has(e.path)
       return el('div', { key: e.path }, el('div', {
-        className: 'dshide-row' + ignoredCls, style: { paddingLeft: `${props.depth * 12 + 8}px` },
+        className: 'dshide-row' + ignoredCls, style: { paddingLeft: `${props.depth * 12 + 8}px` }, title: shown,
         draggable: true,
         onDragStart: (ev: { dataTransfer: { setData: (k: string, v: string) => void; effectAllowed: string } }) => { ev.dataTransfer.setData('text/plain', e.path); ev.dataTransfer.effectAllowed = 'move' },
         onDragOver: (ev: { preventDefault: () => void; dataTransfer: { dropEffect: string } }) => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move' },
         onDrop: (ev: { preventDefault: () => void; dataTransfer: { getData: (k: string) => string } }) => { ev.preventDefault(); props.onMove(ev.dataTransfer.getData('text/plain'), e.path) },
         onClick: () => { props.toggle(e.path) },
-      }, el('span', { className: `dshide-arrow${open ? ' open' : ''}` }, el(Icon, { name: 'chevron', size: 12 })), el('span', { className: 'dshide-glyph-wrap' }, el(Icon, { name: 'folder', size: 20, className: 'dshide-glyph' }), deco ? GitDots({ deco }) : null), el('span', { className: 'dshide-name' }, e.name), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: '在资源管理器中打开', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); void rpc(ide.explore(e.path, false)) } }, el(Icon, { name: 'locate', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onRename(e.path, e.name) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onDelete(e.path, e.name) } }, el(Icon, { name: 'trash', size: 13 })))), open ? el(Tree, { path: e.path, depth: props.depth + 1, expanded: props.expanded, toggle: props.toggle, onOpen: props.onOpen, showHidden: props.showHidden, filter: props.filter, onRename: props.onRename, onDelete: props.onDelete, onMove: props.onMove, root: props.root, lookup: props.lookup, injected: props.injected }) : null)
+      }, el('span', { className: `dshide-arrow${open ? ' open' : ''}` }, el(Icon, { name: 'chevron', size: 12 })), el('span', { className: 'dshide-glyph-wrap' }, el(Icon, { name: 'folder', size: 20, className: 'dshide-glyph' }), deco ? GitDots({ deco }) : null), el('span', { className: 'dshide-name' }, e.name), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: copied === e.path ? '已复制 @引用' : '复制为 @引用', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); copyRef(e.path, 'directory') } }, copied === e.path ? el(Icon, { name: 'check', size: 13 }) : '@'), el('button', { type: 'button', className: 'dshide-row-btn', title: '在资源管理器中打开', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); void rpc(ide.explore(e.path, false)) } }, el(Icon, { name: 'locate', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onRename(e.path, e.name) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onDelete(e.path, e.name) } }, el(Icon, { name: 'trash', size: 13 })))), open ? el(Tree, { path: e.path, depth: props.depth + 1, expanded: props.expanded, toggle: props.toggle, onOpen: props.onOpen, showHidden: props.showHidden, filter: props.filter, onRename: props.onRename, onDelete: props.onDelete, onMove: props.onMove, root: props.root, lookup: props.lookup, injected: props.injected }) : null)
     }
     return el('div', {
-      key: e.path, className: 'dshide-row' + ignoredCls, style: { paddingLeft: `${props.depth * 12 + 8 + 14}px` },
+      key: e.path, className: 'dshide-row' + ignoredCls, style: { paddingLeft: `${props.depth * 12 + 8 + 14}px` }, title: shown,
       draggable: true,
       onDragStart: (ev: { dataTransfer: { setData: (k: string, v: string) => void; effectAllowed: string } }) => { ev.dataTransfer.setData('text/plain', e.path); ev.dataTransfer.effectAllowed = 'move' },
       onClick: () => { props.onOpen(e.path) },
-    }, el('span', { className: 'dshide-glyph-wrap' }, fileIcon(e.path, 20, 'dshide-glyph'), deco ? GitDots({ deco }) : null), el('span', { className: 'dshide-name' }, e.name), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: '在资源管理器中显示', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); void rpc(ide.explore(e.path, true)) } }, el(Icon, { name: 'locate', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onRename(e.path, e.name) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onDelete(e.path, e.name) } }, el(Icon, { name: 'trash', size: 13 }))))
+    }, el('span', { className: 'dshide-glyph-wrap' }, fileIcon(e.path, 20, 'dshide-glyph'), deco ? GitDots({ deco }) : null), el('span', { className: 'dshide-name' }, e.name), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: copied === e.path ? '已复制 @引用' : '复制为 @引用', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); copyRef(e.path, 'file') } }, copied === e.path ? el(Icon, { name: 'check', size: 13 }) : '@'), el('button', { type: 'button', className: 'dshide-row-btn', title: '在资源管理器中显示', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); void rpc(ide.explore(e.path, true)) } }, el(Icon, { name: 'locate', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onRename(e.path, e.name) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); props.onDelete(e.path, e.name) } }, el(Icon, { name: 'trash', size: 13 }))))
   }))
 }
 
@@ -132,6 +154,9 @@ interface SearchProps extends ViewInjected {
 export function SearchView(props: SearchProps): ReturnType<typeof createElement> {
   const { ide, rpc, openDoc } = props
   const el = createElement
+  const settings = useIdeSettings(props.settings)
+  const home = useIdeHome(props.home)
+  const { copied, copyRef } = useCopyRef()
   const [query, setQuery] = useState('')
   const [cs, setCs] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -142,7 +167,8 @@ export function SearchView(props: SearchProps): ReturnType<typeof createElement>
     rpc(ide.search(props.root ?? '', query, cs)).then((r) => { setResult(r); setLoading(false) }, (e) => { setResult({ error: String((e as Error).message), matches: [], files: 0, truncated: false }); setLoading(false) })
   }
   const openFile = (path: string): void => { openDoc({ key: path, kind: 'file', path }) }
-  return el('div', { className: 'dshide-view' }, el('div', { className: 'dshide-search-box' }, el('input', { className: 'dshide-search-input', placeholder: '在工作区中搜索…', value: query, onChange: (e: { target: { value: string } }) => { setQuery(e.target.value) }, onKeyDown: (e: { key: string }) => { if (e.key === 'Enter') run() } }), el('button', { type: 'button', className: 'dshide-iconbtn', title: '区分大小写', onClick: () => { setCs((v) => !v) }, style: cs ? { color: 'var(--dsw-alias-brand-primary)' } : undefined }, 'Aa'), el('button', { type: 'button', className: 'dshide-iconbtn', title: '搜索', onClick: run }, el(Icon, { name: 'search', size: 15 }))), loading ? el('div', { className: 'dshide-loading' }, '搜索中…') : result == null ? el('div', { className: 'dshide-empty' }, '输入关键字，在工作区文件中搜索内容。') : result.error ? el('div', { className: 'dshide-empty' }, result.error) : el('div', { className: 'dshide-results' }, el('div', { className: 'dshide-result-summary' }, `${result.matches.length} 处匹配 · ${result.files} 个文件${result.truncated ? '（已截断）' : ''}`), result.matches.length === 0 ? el('div', { className: 'dshide-empty' }, '未找到匹配结果。') : result.matches.map((m, i) => el('div', { key: i, className: 'dshide-match', onClick: () => { openFile(m.path) } }, el('div', { className: 'dshide-match-path' }, m.path), el('div', { className: 'dshide-match-line' }, el('span', { className: 'dshide-match-lineno' }, String(m.line)), el('span', { className: 'dshide-match-text' }, m.text))))))
+  const abbreviate = settings.explorer.abbreviateHome
+  return el('div', { className: 'dshide-view' }, el('div', { className: 'dshide-search-box' }, el('input', { className: 'dshide-search-input', placeholder: '在工作区中搜索…', value: query, onChange: (e: { target: { value: string } }) => { setQuery(e.target.value) }, onKeyDown: (e: { key: string }) => { if (e.key === 'Enter') run() } }), el('button', { type: 'button', className: 'dshide-iconbtn', title: '区分大小写', onClick: () => { setCs((v) => !v) }, style: cs ? { color: 'var(--dsw-alias-brand-primary)' } : undefined }, 'Aa'), el('button', { type: 'button', className: 'dshide-iconbtn', title: '搜索', onClick: run }, el(Icon, { name: 'search', size: 15 }))), loading ? el('div', { className: 'dshide-loading' }, '搜索中…') : result == null ? el('div', { className: 'dshide-empty' }, '输入关键字，在工作区文件中搜索内容。') : result.error ? el('div', { className: 'dshide-empty' }, result.error) : el('div', { className: 'dshide-results' }, el('div', { className: 'dshide-result-summary' }, `${result.matches.length} 处匹配 · ${result.files} 个文件${result.truncated ? '（已截断）' : ''}`), result.matches.length === 0 ? el('div', { className: 'dshide-empty' }, '未找到匹配结果。') : result.matches.map((m, i) => el('div', { key: i, className: 'dshide-match', onClick: () => { openFile(m.path) } }, el('div', { className: 'dshide-match-path' }, displayPath(m.path, home, abbreviate), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: copied === m.path ? '已复制 @引用' : '复制为 @引用', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); copyRef(m.path, 'file') } }, copied === m.path ? el(Icon, { name: 'check', size: 13 }) : '@'))), el('div', { className: 'dshide-match-line' }, el('span', { className: 'dshide-match-lineno' }, String(m.line)), el('span', { className: 'dshide-match-text' }, m.text))))))
 }
 
 /* ------------------------------------------------------------------ */
@@ -163,6 +189,7 @@ interface ScmStatus {
 export function ScmView(props: ScmProps): ReturnType<typeof createElement> {
   const { ide, rpc, openDoc } = props
   const el = createElement
+  const settings = useIdeSettings(props.settings)
   const [status, setStatus] = useState<ScmStatus | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -173,6 +200,16 @@ export function ScmView(props: ScmProps): ReturnType<typeof createElement> {
     rpc(ide.gitStatus(props.root)).then((r) => { setStatus(r); setLoading(false) }, (e) => { setStatus({ branch: '', changes: [], notRepo: true, error: String((e as Error).message) }); setLoading(false) })
   }
   useEffect(() => { refresh() }, [props.root])
+  // rc.8 event-driven refresh: `credentials/updated` remote events and the
+  // settings-driven auto-refresh timer both re-run the latest refresh.
+  const refreshRef = useRef<() => void>(() => {})
+  refreshRef.current = refresh
+  useEffect(() => props.scm.subscribe(() => { refreshRef.current() }), [props.scm])
+  useEffect(() => {
+    if (settings.git.autoRefreshMs <= 0) return
+    const t = window.setInterval(() => { refreshRef.current() }, settings.git.autoRefreshMs)
+    return () => { window.clearInterval(t) }
+  }, [settings.git.autoRefreshMs])
   const act = (fn: () => Promise<unknown>): void => { setBusy(true); void fn().then(() => { setBusy(false); refresh() }) }
   const openDiff = (path: string): void => { openDoc({ key: `diff:${path}`, kind: 'diff', path, ...(props.root ? { cwd: props.root } : {}) }) }
   const commit = (): void => {
@@ -204,7 +241,7 @@ export interface WorkspaceSnapshot {
   archivedSessionIds?: string[]
 }
 
-interface SessionProps extends Pick<ViewInjected, 'sessions' | 'workspaces'> {
+interface SessionProps extends Pick<ViewInjected, 'sessions' | 'workspaces' | 'settings' | 'home'> {
   wsState: WorkspaceSnapshot | null
   sessState: SessionSnapshot | null
 }
@@ -239,6 +276,8 @@ function dotStateOf(s: SessionLike): string {
 export function SessionView(props: SessionProps): ReturnType<typeof createElement> {
   const { sessions, workspaces } = props
   const el = createElement
+  const settings = useIdeSettings(props.settings)
+  const home = useIdeHome(props.home)
   const sessState = props.sessState
   const wsState = props.wsState
   const ids: string[] = sessState?.ids ?? []
@@ -260,16 +299,27 @@ export function SessionView(props: SessionProps): ReturnType<typeof createElemen
     try { localStorage.setItem(EXPAND_KEY, JSON.stringify([...expanded])) } catch { /* storage unavailable */ }
   }, [expanded])
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<{ items?: unknown[] } | null>(null)
+  const [results, setResults] = useState<unknown[] | null>(null)
+  const [searchState, setSearchState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [action, setAction] = useState<{ kind: string; id: string; name: string } | null>(null)
   const [input, setInput] = useState('')
   useEffect(() => {
     const q = query.trim()
-    if (q === '') { setResults(null); return }
+    if (q === '') { setResults(null); setSearchState('idle'); return }
     let cancelled = false
     const ctrl = new AbortController()
+    setSearchState('loading')
     const timer = window.setTimeout(() => {
-      sessions.search(q, ctrl.signal).then((r) => { if (!cancelled) setResults(r) }).catch(() => { if (!cancelled) setResults({ items: [] }) })
+      sessions.search(q, ctrl.signal).then((r) => {
+        if (cancelled) return
+        setResults(r.items)
+        // rc.8 默认部署关闭会话全文索引：disabled 时降级为本地匹配 + 提示。
+        setSearchState(r.disabled ? 'error' : 'ready')
+      }).catch(() => {
+        if (cancelled) return
+        setResults([])
+        setSearchState('error')
+      })
     }, 250)
     return () => { cancelled = true; window.clearTimeout(timer); try { ctrl.abort() } catch { /* no-op */ } }
   }, [query])
@@ -312,13 +362,13 @@ export function SessionView(props: SessionProps): ReturnType<typeof createElemen
   const workspaceRow = (w: typeof workspaceList[number]): ReturnType<typeof createElement> => {
     const members = (w.sessionIds ?? []).map((id) => byId[id]).filter(visible).sort((a: SessionLike, b: SessionLike) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
     const isOpen = expanded.has(w.workspaceId)
-    return el('div', { key: w.workspaceId }, el('div', { className: 'dshide-project-row', title: w.path, role: 'treeitem', 'aria-expanded': isOpen, onClick: () => { toggleGroup(w.workspaceId) } }, el('span', { className: `dshide-chevron${isOpen ? ' open' : ''}` }, el(Icon, { name: 'chevron', size: 12 })), el('span', { className: 'dshide-slot' }, el(Icon, { name: 'folder', size: 16, className: isOpen ? 'dshide-folder-active' : 'dshide-folder' })), el('span', { className: 'dshide-title' }, w.title), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名工作区', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); setAction({ kind: 'wrename', id: w.workspaceId, name: w.title }); setInput(w.title) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除工作区', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); setAction({ kind: 'wdelete', id: w.workspaceId, name: w.title }) } }, el(Icon, { name: 'trash', size: 13 })))), isOpen ? members.map((s) => sessionRow(s, true)) : null)
+    return el('div', { key: w.workspaceId }, el('div', { className: 'dshide-project-row', title: displayPath(w.path, home, settings.explorer.abbreviateHome), role: 'treeitem', 'aria-expanded': isOpen, onClick: () => { toggleGroup(w.workspaceId) } }, el('span', { className: `dshide-chevron${isOpen ? ' open' : ''}` }, el(Icon, { name: 'chevron', size: 12 })), el('span', { className: 'dshide-slot' }, el(Icon, { name: 'folder', size: 16, className: isOpen ? 'dshide-folder-active' : 'dshide-folder' })), el('span', { className: 'dshide-title' }, w.title), el('span', { className: 'dshide-row-actions', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation() } }, el('button', { type: 'button', className: 'dshide-row-btn', title: '重命名工作区', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); setAction({ kind: 'wrename', id: w.workspaceId, name: w.title }); setInput(w.title) } }, el(Icon, { name: 'edit', size: 13 })), el('button', { type: 'button', className: 'dshide-row-btn', title: '删除工作区', onClick: (ev: { stopPropagation: () => void }) => { ev.stopPropagation(); setAction({ kind: 'wdelete', id: w.workspaceId, name: w.title }) } }, el(Icon, { name: 'trash', size: 13 })))), isOpen ? members.map((s) => sessionRow(s, true)) : null)
   }
   const toggleGroup = (id: string): void => { setExpanded((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n }) }
   let body: ReturnType<typeof createElement> | Array<ReturnType<typeof createElement>>
   if (q !== '') {
     const local = ids.map((id) => byId[id]).filter(visible).filter((s) => (s.displayTitle ?? '').toLowerCase().includes(q) || label(s).toLowerCase().includes(q)).sort((a: SessionLike, b: SessionLike) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
-    const content: unknown[] = results?.items ?? []
+    const content: unknown[] = results ?? []
     const merged: Array<{ id: string; title: string; ws: string; snippet?: string }> = local.map((s) => ({ id: s.id, title: s.displayTitle ?? s.id, ws: label(s) }))
     const seenIds: Record<string, boolean> = {}
     merged.forEach((m) => { seenIds[m.id] = true })
@@ -329,7 +379,13 @@ export function SessionView(props: SessionProps): ReturnType<typeof createElemen
       if (s) merged.push({ id: ci.sessionId, title: s.displayTitle ?? ci.sessionId, ws: label(s), ...(ci.snippet ? { snippet: ci.snippet } : {}) })
     })
     const rows = merged.slice(0, 20).map((m) => el('div', { key: m.id, className: 'dshide-session-row', onClick: () => { open(m.id) } }, el('span', { className: 'dshide-slot' }, el(StateDot, { state: 'done' })), el('span', { className: 'dshide-title' }, m.title), m.ws ? el('span', { className: 'dshide-rename' }, m.ws) : null, m.snippet ? el('span', { className: 'dshide-time' }, m.snippet) : null))
-    body = rows.length === 0 ? el('div', { className: 'dshide-empty' }, '未找到匹配的会话。') : rows
+    body = searchState === 'loading' && rows.length === 0
+      ? el('div', { className: 'dshide-loading' }, '搜索中…')
+      : el('div', null,
+        searchState === 'error'
+          ? el('div', { className: 'dshide-search-warning' }, '会话全文搜索不可用（该部署未启用内容索引），仅按标题/工作区匹配。')
+          : null,
+        rows.length === 0 ? el('div', { className: 'dshide-empty' }, '未找到匹配的会话。') : rows)
   } else if (view === 'flat') {
     const flat = ids.map((id) => byId[id]).filter(visible).sort((a: SessionLike, b: SessionLike) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
     body = flat.length === 0 ? el('div', { className: 'dshide-empty' }, '暂无会话。') : flat.map((s) => sessionRow(s, false))

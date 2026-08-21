@@ -6,6 +6,8 @@
  */
 
 import { createElement } from 'react'
+import { abbreviateHomePath } from '@deepseek-ai/dsh-client-runtime/client'
+import { formatFileMention } from '@deepseek-ai/dsh-file-reference/grammar'
 import type { GitFileState, GitStatusMapResult, RemoteResult } from 'dsh-ide-ui/types'
 
 /** One open document tab (file preview or git diff) in the editor column. */
@@ -39,6 +41,26 @@ export const joinPath = (dir: string, name: string): string => dir.replace(/[\\/
 export const dirnameOf = (p: string): string => {
   const i = Math.max(p.lastIndexOf('\\'), p.lastIndexOf('/'))
   return i < 0 ? p : p.slice(0, i)
+}
+
+/**
+ * Display path with optional POSIX-home abbreviation (rc.8 `~` support).
+ * Windows drive/UNC paths stay verbatim; `home` comes from `host.describe`.
+ * @param path - absolute path to display.
+ * @param home - host account home (absent skips abbreviation).
+ * @param abbreviate - setting switch; false returns the raw path.
+ */
+export function displayPath(path: string, home: string | undefined, abbreviate: boolean): string {
+  if (!abbreviate || home === undefined || home === '') return path
+  return abbreviateHomePath(path, home)
+}
+
+/**
+ * Official `@file` reference text for one path (rc.8 grammar; quoted form for
+ * paths with spaces). Returns undefined for paths the grammar cannot express.
+ */
+export function fileMentionFor(path: string, kind: 'file' | 'directory'): string | undefined {
+  return formatFileMention({ path, kind }, false)
 }
 
 export const baseName = (p: string): string => {

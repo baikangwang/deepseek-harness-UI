@@ -12,11 +12,14 @@ import type { IdeRemoteFace } from 'dsh-ide-ui/types'
 // Type-only: resolve the injected client service augmentations + branded ids.
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 // Type-only: pull the SlotMap merges we register into (sidebar.workspaces,
-// conversation.view) through the contract module.
+// conversation.view, settings.plugin.item) through the contract module.
 import type {} from './slots.ts'
 import type { IdeInjected } from './slots.ts'
 import { createIdeStore } from './stores.ts'
 import { rpc } from './lib.ts'
+import { IDE_NAMESPACE } from '../settings-shared.ts'
+import { createIdeSettingsStore, NO_HOME_SOURCE, settingsValue, type IdeHomeSource, type IdeSettingsScope } from './settings-store.ts'
+import { createIdeSettingsCardFace, IdeSettingsCard } from './settings/card.tsx'
 import { IdeSidebar } from './IdeSidebar.tsx'
 import { EditorView } from './EditorView.tsx'
 // Side-effect: inject the global stylesheet (bundled by the standalone tsdown CSS plugin).
@@ -63,7 +66,7 @@ export async function apply(ctx: Context): Promise<void> {
   // augmentation import chain resolving.
   interface SessionsFace {
     open(id: string): void
-    search(query: string, signal: AbortSignal): Promise<{ ok: boolean; value: { items: unknown[]; hasMore: boolean }; error: { message: string } }>
+    search(query: string, signal: AbortSignal): Promise<{ ok: boolean; value: { items: unknown[]; hasMore: boolean }; error: { code?: string; message: string } }>
     fork(opts: { sessionId: string; increaseTitle?: boolean }): Promise<string>
     archive(id: string): void
   }
@@ -78,10 +81,57 @@ export async function apply(ctx: Context): Promise<void> {
   const sessions = ctx.get('sessions') as unknown as SessionsFace
   const workspaces = ctx.get('workspaces') as unknown as WorkspacesFace
 
+  // `ide` settings: mirror the Host namespace through the optional browser
+  // settings scope (dsh-client-ui-settings); without it, serve defaults.
+  // NOTE: the browser scope is the client-side SettingsScope contract
+  // (getSnapshot/subscribe + set/unset), NOT the Host-side get/watch/update/
+  // replace — mixing the two crashed the loader entry at runtime.
+  const settingsScope = ctx.get('settingsScope') as { bind(opts: { namespace: string }): IdeSettingsScope } | undefined
+  const settings = createIdeSettingsStore()
+  let settingsScopeHandle: IdeSettingsScope | undefined
+  if (settingsScope !== undefined) {
+    settingsScopeHandle = settingsScope.bind({ namespace: IDE_NAMESPACE })
+    settings.patch(settingsValue(settingsScopeHandle))
+    ctx.effect(() => settingsScopeHandle!.subscribe(() => {
+      settings.patch(settingsValue(settingsScopeHandle!))
+    }), 'ide: settings mirror')
+  }
+
+  // Host account home (rc.8 `host.describe().home`) for `~` path display.
+  const connection = ctx.get('connection') as { hostDescription: { getSnapshot(): { home?: string } | undefined; subscribe(fn: () => void): () => void } } | undefined
+  const homeSource: IdeHomeSource = connection === undefined
+    ? NO_HOME_SOURCE
+    : {
+        get: () => connection.hostDescription.getSnapshot()?.home,
+        subscribe: (fn) => connection.hostDescription.subscribe(fn),
+      }
+
+  // SCM refresh bus: `credentials/updated` (rc.8 remote event) and the
+  // settings-driven auto-refresh timer both push through it.
+  const scmListeners = new Set<() => void>()
+  const scmBus = {
+    subscribe(fn: () => void): () => void {
+      scmListeners.add(fn)
+      return () => { scmListeners.delete(fn) }
+    },
+    emit(): void { for (const fn of scmListeners) { try { fn() } catch { /* listener isolated */ } } },
+  }
+  // rc.8 remote event delivery: git credentials changed -> refresh SCM state.
+  ctx.effect(() => ctx.remote.$on('credentials/updated', () => { scmBus.emit() }), 'ide: credential refresh')
+  // settings.yaml edited outside the page / on another device -> resync mirror.
+  if (settingsScopeHandle !== undefined) {
+    ctx.effect(() => ctx.remote.$on('settings/document-updated', (ns) => {
+      if (ns === IDE_NAMESPACE) settings.patch(settingsValue(settingsScopeHandle!))
+    }), 'ide: settings sync')
+  }
+
   const injected: IdeInjected = {
     ide,
     rpc,
     store,
+    settings,
+    home: homeSource,
+    scm: { subscribe: scmBus.subscribe },
     openDoc: (tab) => {
       store.add(tab)
       clickTabNow(['编辑器', 'Editor'])
@@ -89,9 +139,13 @@ export async function apply(ctx: Context): Promise<void> {
     sessions: {
       open: (id) => { sessions.open(id) },
       search: async (query, signal) => {
+        // rc.8: 默认部署关闭会话全文索引（openAt: 'never'），search 会以
+        // SESSION_QUERY_SEARCH_DISABLED 失败。把失败折叠成 disabled 标志，
+        // 让面板降级为"本地标题/工作区匹配 + 不可用提示"，而不是把
+        // "被禁用"渲染成"无结果"。
         const result = await sessions.search(query, signal)
-        if (!result.ok) throw new Error(result.error.message)
-        return result.value
+        if (!result.ok) return { items: [], hasMore: false, disabled: true }
+        return { ...result.value, disabled: false }
       },
       fork: (id) => {
         sessions.fork({ sessionId: id })
@@ -125,4 +179,18 @@ export async function apply(ctx: Context): Promise<void> {
     { name: 'conversation.view', id: 'editor', order: 20, label: '编辑器', inject: () => injected },
     EditorView as any,
   ))
+
+  // rc.8 plugin-owned settings surface: our card under the `ide` key appears
+  // on the official configurable-plugins tab. Guarded on the settings scope —
+  // the keyed slot's declaring tab also needs it, so an absent scope means
+  // the inject never fires anyway (a wait, not a throw).
+  if (settingsScopeHandle !== undefined) {
+    const cardFace = createIdeSettingsCardFace(settings, settingsScopeHandle)
+    ctx.slots.inject('settings.plugin.item', function* () {
+      yield ctx.slots.register(
+        { name: 'settings.plugin.item', key: IDE_NAMESPACE, inject: () => cardFace },
+        IdeSettingsCard as any,
+      )
+    })
+  }
 }

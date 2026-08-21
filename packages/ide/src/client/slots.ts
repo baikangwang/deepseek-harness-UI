@@ -15,8 +15,12 @@ import type { IdeRemoteFace, RemoteResult } from 'dsh-ide-ui/types'
 // package compiles against clean official DSH.
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+// Type-only: the `settings.plugin.item` keyed slot (declared by the
+// configurable-plugins tab; our card registers under the `ide` key).
+import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import type { IdeTab } from './lib.ts'
 import type { IdeStore } from './stores.ts'
+import type { IdeHomeSource, IdeSettingsHandle } from './settings-store.ts'
 
 /** Registrant business face: plain data and callbacks over the `ide` Remote + session/workspace services. */
 export interface IdeInjected {
@@ -25,11 +29,18 @@ export interface IdeInjected {
   rpc: <T>(p: Promise<RemoteResult<T>>) => Promise<T>
   /** Editor-tab store handle (shared with the editor column registration). */
   store: IdeStore
+  /** Resolved `ide` settings (mirror of the Host namespace; defaults without a settings provider). */
+  settings: IdeSettingsHandle
+  /** Observable host account home (rc.8 `host.describe().home`), for `~` path display. */
+  home: IdeHomeSource
+  /** SCM refresh bus: remote events (credentials/updated) and timers push through it. */
+  scm: { subscribe(fn: () => void): () => void }
   /** Open a file/diff tab in the editor view (a `conversation.view` tab). */
   openDoc: (tab: IdeTab) => void
   sessions: {
     open: (id: string) => void
-    search: (query: string, signal: AbortSignal) => Promise<{ items: unknown[]; hasMore: boolean }>
+    /** 会话搜索：disabled 表示远端内容索引不可用（rc.8 默认部署关闭全文索引），调用方应降级为本地匹配。 */
+    search: (query: string, signal: AbortSignal) => Promise<{ items: unknown[]; hasMore: boolean; disabled: boolean }>
     fork: (id: string) => void
     archive: (id: string) => void
   }
